@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+}
+
+model Users {
+  id                    Int       @id @default(autoincrement())
+  name                  String
+  email                 String    @unique
+  password              String
+  verificationCode      String?   // Se você adicionou esse campo
+  verificationCodeExpiration DateTime? // Se você adicionou esse campo
+  isVerified            Boolean   @default(false)
+  isRole                Role      @default(user) // Utilizando o enum aqui
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  lastVerificationRequest DateTime @default(now())
+  instituicoes          InstituicaoEspirita[]  // Relacionamento com a tabela InstituicaoEspirita
+  @@map("Users")
+  Participante2025 Participante2025[]
+}
+
+model InstituicaoEspirita {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  estado      String
+  cidade      String
+  bairro      String
+  logradouro  String
+  numero      String
+  complemento String
+  telefone    String
+  telefoneDiJ String
+  dia_evang   String
+  email       String?  
+  users       Users[]   // Relacionamento com os usuários
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("InstituicaoEspirita")
+}
+
+model Participante2025 {
+  id                         Int       @id @default(autoincrement())
+  nomeCompleto               String    // Obrigatório
+  dataNascimento             DateTime  // Obrigatório
+  sexo                       Sexo      // Obrigatório
+  email                      String?
+  telefone                   String?
+  nomeCompletoResponsavel    String?
+  documentoResponsavel       String?
+  telefoneResponsavel        String?
+  tipoParticipacao           TipoParticipacao  // Obrigatório
+  comissao                   Comissao?  // Opcional
+  camisa                     String?
+  tamanhoCamisa              String?
+  cep                        String?
+  estado                     String?
+  cidade                     String?
+  bairro                     String?
+  logradouro                 String?
+  numero                     String?
+  complemento                String?
+  numeroCMEJacas             String?
+  medicacao                  String?
+  alergia                    String?
+  outrasInformacoes          String?
+  
+  // Relacionamento com a tabela de Users
+  userId                     Int
+  user                       Users    @relation(fields: [userId], references: [id])
+
+  @@map("Participantes2025")
+}
+
+enum Sexo {
+  Masculino
+  Feminino
+}
+
+enum TipoParticipacao {
+  Confraternista
+  Trabalhador
+}
+
+enum Comissao {
+  Divulgacao
+  Recepcao
+  Outros
+}
