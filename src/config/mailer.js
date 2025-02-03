@@ -3,11 +3,15 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Verificando se a porta e o secure estão configurados corretamente
+const port = Number(process.env.MAIL_PORT);
+const secure = port === 465; // Usar SSL/TLS com porta 465, caso contrário, STARTTLS com 587
+
 // Criação do transportador para o Nodemailer
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST, // smtp.gmail.com
-  port: Number(process.env.MAIL_PORT), // 587 (para Gmail)
-  secure: process.env.MAIL_PORT === "465", // Verifica se a porta é 465 (SSL)
+  port: port,                  // Porta definida nas variáveis de ambiente (587 ou 465)
+  secure: secure,              // Configuração de segurança
   auth: {
     user: process.env.MAIL_USER, // E-mail de envio
     pass: process.env.MAIL_PASS, // Senha ou App Password (para Gmail)
