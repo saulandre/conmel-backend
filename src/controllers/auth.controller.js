@@ -529,10 +529,7 @@ export const login = async (req, res) => {
 
     console.log('Usuário encontrado:', user);
 
-    if (!user.isVerified) {
-      console.log('Usuário não verificado:', user.email);
-      return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
-    }
+  
 
     console.log('Verificando senha...');
     const validPassword = await bcrypt.compare(password, user.password);
