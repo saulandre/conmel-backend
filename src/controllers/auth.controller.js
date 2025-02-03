@@ -214,15 +214,13 @@ export const accountVerifiedEmail = async (name, email) => {
             <div class="content">
               <p>Prezado(a) ${name},</p>
               
-              <p>Sua conta no Sistema de <strong>Gestão de Inscrição</strong> da COMEJACA foi verificada com sucesso! 🎉</p>
+              <p✅ Informamos que seu acesso ao<strong>Gestor de Inscrição</strong> da COMEJACA foi verificado com sucesso!</p>
 
-              <div class="success-message">
-                ✅ Conta Verificada com Sucesso!
-              </div>
+    
 
               <p>Agora você tem acesso completo ao sistema. Para começar a utilizar todas as funcionalidades, <a href="https://www.comejaca.org.br" target="_blank">clique aqui</a>.</p>
 
-              <p>Estamos empenhados em fazer você ter a melhor experiencia.</p>
+              <p>Estamos empenhados em fazer você ter a melhor experiência.</p>
 
               <p>Atenciosamente,<br>
               Equipe de Tecnologia COMEJACA</p>
