@@ -151,7 +151,7 @@ export const accountVerifiedEmail = async (name, email) => {
     await transporter.sendMail({
       from: `"COMEJACA Gestão" <${process.env.MAIL_USER}>`,
       to: email,
-      subject: 'Conta Verificada com Sucesso - Sistema de Gestão COMEJACA',
+      subject: 'Conta Verificada - Sistema de Gestão COMEJACA',
       html: `
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -214,7 +214,7 @@ export const accountVerifiedEmail = async (name, email) => {
             <div class="content">
               <p>Prezado(a) ${name},</p>
               
-              <p✅ Informamos que seu acesso ao<strong>Gestor de Inscrição</strong> da COMEJACA foi verificado com sucesso!</p>
+              <p>✅ Informamos que seu acesso ao<strong>Gestor de Inscrição</strong> da COMEJACA foi verificado com sucesso!</p>
 
     
 
