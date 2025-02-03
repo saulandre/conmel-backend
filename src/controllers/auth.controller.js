@@ -214,7 +214,7 @@ export const accountVerifiedEmail = async (name, email) => {
             <div class="content">
               <p>Prezado(a) ${name},</p>
               
-              <p>✅ Informamos que seu acesso ao<strong>Gestor de Inscrição</strong> da COMEJACA foi verificado com sucesso!</p>
+              <p>✅ Informamos que seu acesso ao <strong>Gestor de Inscrição</strong> da COMEJACA foi verificado com sucesso!</p>
 
     
 
