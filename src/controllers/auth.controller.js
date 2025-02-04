@@ -4,6 +4,7 @@ import prisma from '../prisma.js';
 import { generateVerificationCode } from '../services/validation.js';
 import dotenv from 'dotenv';
 import transporter from '../config/mailer.js';
+import Joi from 'joi';
 
 dotenv.config();
 
@@ -601,6 +602,202 @@ export const resendVerificationCode = async (req, res) => {
     return res.status(500).json({
       error: MESSAGES.errors.internalError,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+export const participante = async (req, res) => {
+
+  const userId = req.userId
+  // Schema de validação completo
+  const schema = Joi.object({
+    // Dados Pessoais
+    nomeCompleto: Joi.string().min(3).max(100).required().label('Nome Completo'),
+    dataNascimento: Joi.date().iso().max(new Date()).required().label('Data de Nascimento'),
+    sexo: Joi.string().valid(
+      'Masculino', 
+      'Feminino', 
+      
+    ).required().label('Gênero'),
+    email: Joi.string().email().max(100).required().label('E-mail'),
+    telefone: Joi.string().pattern(/^\d{10,11}$/).required().label('Telefone'),
+
+    // Responsável (para menores)
+    tipoParticipacao: Joi.string().valid('Confraternista', 'Trabalhador').required().label('Tipo de Participação'),
+    nomeCompletoResponsavel: Joi.when('tipoParticipacao', {
+      is: 'Confraternista',
+      then: Joi.string().min(3).max(100).required(),
+      otherwise: Joi.string().allow(null, '').optional()
+    }).label('Nome do Responsável'),
+    documentoResponsavel: Joi.when('tipoParticipacao', {
+      is: 'Confraternista',
+      then: Joi.string().pattern(/^\d{11}$/).required(),
+      otherwise: Joi.string().allow(null, '').optional()
+    }).label('Documento do Responsável'),
+    telefoneResponsavel: Joi.when('tipoParticipacao', {
+      is: 'Confraternista',
+      then: Joi.string().pattern(/^\d{10,11}$/).required(),
+      otherwise: Joi.string().allow(null, '').optional()
+    }).label('Telefone do Responsável'),
+
+    // Configuração do Evento
+    comissao: Joi.string().valid('Recepcao').allow(null, '').optional().label('Comissão'),
+    camisa: Joi.string().required().label('Receber Camisa'),
+    tamanhoCamisa: Joi.when('camisa', {
+      is: true,
+      then: Joi.string().valid('PP', 'P', 'M', 'G', 'GG', 'XG').required(),
+      otherwise: Joi.string().allow(null, '').optional()
+    }).label('Tamanho da Camisa'),
+
+    // Endereço
+    cep: Joi.string().pattern(/^\d{5}-?\d{3}$/).required().label('CEP'),
+    estado: Joi.string().length(2).required().label('Estado'),
+    cidade: Joi.string().max(50).required().label('Cidade'),
+    IE: Joi.string().max(50).required().label('ie'),
+    bairro: Joi.string().max(50).required().label('Bairro'),
+    logradouro: Joi.string().max(100).required().label('Logradouro'),
+    numero: Joi.string().max(10).required().label('Número'),
+    complemento: Joi.string().max(50).allow(null, '').optional().label('Complemento'),
+
+    // Saúde
+    numeroCMEJacas: Joi.string().pattern(/^CMEJ-\d{4}$/).allow(null, '').optional().label('Número CMEJacas'),
+    medicacao: Joi.string().max(500).allow(null, '').optional().label('Medicação'),
+    alergia: Joi.string().max(500).allow(null, '').optional().label('Alergia'),
+    outrasInformacoes: Joi.string().max(1000).allow(null, '').optional().label('Outras Informações')
+
+  }).messages({
+    'any.required': 'O campo {{#label}} é obrigatório',
+    'string.empty': 'O campo {{#label}} não pode estar vazio',
+    'string.pattern.base': 'Formato inválido para {{#label}}',
+    'date.max': '{{#label}} não pode ser uma data futura'
+  });
+
+  // Validação dos dados
+  const { error } = schema.validate(req.body, { abortEarly: false });
+  if (error) {
+    const errors = error.details.map(detail => ({
+      field: detail.context.label,
+      message: detail.message
+    }));
+    return res.status(400).json({ 
+      error: MESSAGES.errors.invalidData,
+      details: errors
+    });
+  }
+
+  try {
+    // Verificação do usuário
+    const usuario = await prisma.users.findUnique({
+      where: { id: userId },
+      select: { id: true, isVerified: true }
+    });
+    
+    if (!usuario) return res.status(404).json({ error: MESSAGES.errors.userNotFound });
+    if (!usuario.isVerified) return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
+
+
+    // Preparação dos dados
+    const dadosParticipante = {
+      ...req.body,
+      userId,
+      dataNascimento: new Date(req.body.dataNascimento),
+      // Normalização de dados
+      cep: req.body.cep.replace(/\D/g, ''),
+      telefone: req.body.telefone.replace(/\D/g, ''),
+      documentoResponsavel: req.body.documentoResponsavel?.replace(/\D/g, '') || null
+    };
+
+    // Criação do participante
+    const novoParticipante = await prisma.participante2025.create({
+      data: dadosParticipante,
+      select: {
+        id: true,
+        nomeCompleto: true,
+        dataNascimento: true,
+        sexo: true,
+        email: true,
+        telefone: true,
+        tipoParticipacao: true,
+        nomeCompletoResponsavel: true,
+        documentoResponsavel: true,
+        telefoneResponsavel: true,
+        comissao: true,
+        camisa: true,
+        tamanhoCamisa: true,
+        cep: true,
+        estado: true,
+        cidade: true,
+        bairro: true,
+        logradouro: true,
+        numero: true,
+        complemento: true,
+        numeroCMEJacas: true,
+        medicacao: true,
+        alergia: true,
+        outrasInformacoes: true,
+        IE: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    console.log(`Novo participante ID: ${novoParticipante.id} - ${novoParticipante.tipoParticipacao}`);
+
+    return res.status(201).json({
+      success: true,
+      message: MESSAGES.success.inscriptionCreated,
+      data: novoParticipante
+    });
+
+  } catch (error) {
+    console.error('Erro no cadastro:', error);
+
+
+
+    return res.status(500).json({
+      error: MESSAGES.errors.internalError,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+export const getparticipantes = async (req, res) => {
+  try {
+    console.log("Iniciando a função getparticipantes");
+
+    // Verificar se o usuário está autenticado
+    if (!req.userId) {
+      return res.status(401).json({ message: "Usuário não autenticado" });
+    }
+
+    const userId = req.userId; // ID do usuário logado (vem do JWT)
+    console.log("ID do usuário logado:", userId);
+    // Busca todas as inscrições do usuário
+    console.log("Buscando inscrições no banco de dados...");
+    const participantes = await prisma.participante2025.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        nomeCompleto: true,
+        IE: true,
+        createdAt: true,
+      }
+    });
+
+    console.log("Inscrições encontradas:", participantes);
+
+    if (participantes.length === 0) {
+      console.log("Nenhuma inscrição encontrada para o usuário:", userId);
+      return res.status(404).json({ message: "Nenhuma inscrição encontrada para este usuário" });
+    }
+
+    console.log("Retornando inscrições para o cliente");
+    return res.status(200).json(participantes); // Resposta explícita de sucesso
+  } catch (error) {
+    console.error("Erro ao buscar inscrições:", error.stack);
+    return res.status(500).json({ 
+      error: "Erro interno do servidor",
+      details: error.message 
     });
   }
 };

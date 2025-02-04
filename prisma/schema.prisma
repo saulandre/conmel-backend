@@ -49,32 +49,34 @@ model InstituicaoEspirita {
   @@map("InstituicaoEspirita")
 }
 
-model Participante2025 {
+model Participante2025   {
   id                         Int       @id @default(autoincrement())
   nomeCompleto               String    // Obrigatório
   dataNascimento             DateTime  // Obrigatório
   sexo                       Sexo      // Obrigatório
   email                      String?
   telefone                   String?
-  nomeCompletoResponsavel    String?
-  documentoResponsavel       String?
-  telefoneResponsavel        String?
+  nomeCompletoResponsavel    String
+  documentoResponsavel       String
+  telefoneResponsavel        String
   tipoParticipacao           TipoParticipacao  // Obrigatório
-  comissao                   Comissao?  // Opcional
-  camisa                     String?
-  tamanhoCamisa              String?
+  comissao                   Comissao // Opcional
+  camisa                     Camisa
+  tamanhoCamisa              String
   cep                        String?
   estado                     String?
   cidade                     String?
   bairro                     String?
   logradouro                 String?
   numero                     String?
-  complemento                String?
+  complemento                String
   numeroCMEJacas             String?
-  medicacao                  String?
-  alergia                    String?
-  outrasInformacoes          String?
-  
+  medicacao                  String
+  alergia                    String
+  IE                         String?
+  outrasInformacoes          String
+    createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   // Relacionamento com a tabela de Users
   userId                     Int
   user                       Users    @relation(fields: [userId], references: [id])
@@ -96,4 +98,7 @@ enum Comissao {
   Divulgacao
   Recepcao
   Outros
+}
+enum Camisa {
+Sim
 }

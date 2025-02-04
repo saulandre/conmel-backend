@@ -4,7 +4,9 @@ import {
   register,
   resendVerificationCode,
   verificar,
-  validateToken
+  validateToken,
+  participante,
+  getparticipantes
 } from '../controllers/auth.controller.js';
 import { isAuthenticated } from '../middlewares/authMiddleware.js';
 import { validateLogin, validateRegister, validateVerification } from '../../validators/authValidator.js'; // Middlewares de validação
@@ -26,8 +28,9 @@ router.post('/registrar', validateRegister, register); // Validação de dados a
 router.post('/verificar', isAuthenticated, validateVerification, verificar); // Validação de dados antes de verificar
 router.post('/enviarcodigo', isAuthenticated, resendVerificationCode);
 router.post('/validartoken', isAuthenticated, validateVerification, validateToken);
-router.post('/inscrever', isAuthenticated, validateVerification, validateToken);
-
+router.post('/inscrever', isAuthenticated, validateVerification, participante);
+router.get('/inscrever', isAuthenticated, validateVerification, participante);
+router.get('/inscricoes', isAuthenticated, validateVerification, getparticipantes);
 // Middleware de tratamento de erros global
 router.use((err, req, res, next) => {
   console.error('💥 Erro:', err.message);
