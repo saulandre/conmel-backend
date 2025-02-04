@@ -152,7 +152,7 @@ export const accountVerifiedEmail = async (name, email) => {
     await transporter.sendMail({
       from: `"COMEJACA Gestão" <${process.env.MAIL_USER}>`,
       to: email,
-      subject: 'Conta Verificada - Sistema de Gestão COMEJACA',
+      subject: '✅ Conta Verificada - Sistema de Gestão COMEJACA',
       html: `
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -215,11 +215,11 @@ export const accountVerifiedEmail = async (name, email) => {
             <div class="content">
               <p>Prezado(a) ${name},</p>
               
-              <p>✅ Informamos que seu acesso ao <strong>Gestor de Inscrição</strong> da COMEJACA foi verificado com sucesso!</p>
+              <p>Informamos que seu acesso ao <strong>Gestor de Inscrição</strong> da COMEJACA foi verificado com sucesso!</p>
 
     
 
-              <p>Agora você tem acesso completo ao sistema. Para começar a utilizar todas as funcionalidades, <a href="https://www.comejaca.org.br" target="_blank">clique aqui</a>.</p>
+              <p>Agora você tem acesso completo ao sistema.</p>
 
               <p>Estamos empenhados em fazer você ter a melhor experiência.</p>
 
@@ -760,20 +760,21 @@ export const participante = async (req, res) => {
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
-};
-export const getparticipantes = async (req, res) => {
+};export const getparticipantes = async (req, res) => {
   try {
-    console.log("Iniciando a função getparticipantes");
+    // 1. Obter ID do usuário corretamente do middleware de autenticação
+    const userId = req.user?.id; // ✅ Correto (assumindo que o middleware populou req.user)
 
-    // Verificar se o usuário está autenticado
-    if (!req.userId) {
-      return res.status(401).json({ message: "Usuário não autenticado" });
+    // 2. Validação reforçada
+    if (!userId) {
+      console.warn('Tentativa de acesso não autenticada');
+      return res.status(401).json({ 
+        error: 'Não autorizado',
+        message: 'Token de acesso inválido ou expirado' 
+      });
     }
 
-    const userId = req.userId; // ID do usuário logado (vem do JWT)
-    console.log("ID do usuário logado:", userId);
-    // Busca todas as inscrições do usuário
-    console.log("Buscando inscrições no banco de dados...");
+    // 3. Buscar participantes com tratamento de erros específico
     const participantes = await prisma.participante2025.findMany({
       where: { userId },
       select: {
@@ -784,20 +785,110 @@ export const getparticipantes = async (req, res) => {
       }
     });
 
-    console.log("Inscrições encontradas:", participantes);
-
+    // 4. Melhor resposta para nenhum resultado
     if (participantes.length === 0) {
-      console.log("Nenhuma inscrição encontrada para o usuário:", userId);
-      return res.status(404).json({ message: "Nenhuma inscrição encontrada para este usuário" });
+      return res.status(200).json({
+        message: 'Nenhuma inscrição encontrada',
+        suggestions: ['Verifique se já realizou alguma inscrição']
+      });
     }
 
-    console.log("Retornando inscrições para o cliente");
-    return res.status(200).json(participantes); // Resposta explícita de sucesso
-  } catch (error) {
-    console.error("Erro ao buscar inscrições:", error.stack);
-    return res.status(500).json({ 
-      error: "Erro interno do servidor",
-      details: error.message 
+    // 5. Resposta de sucesso padronizada
+    return res.status(200).json({
+      count: participantes.length,
+      data: participantes,
+      meta: {
+        requestId: req.requestId, // Assumindo que existe um ID de requisição
+        timestamp: new Date().toISOString()
+      }
     });
+
+  } catch (error) {
+    // 6. Log de erro melhorado
+    console.error(`Erro [${req.requestId}] em getparticipantes:`, {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.userId
+    });
+
+    // 7. Resposta de erro padronizada
+    return res.status(500).json({
+      error: 'Erro no processamento',
+      message: 'Não foi possível recuperar as inscrições',
+      reference: req.requestId // Para rastreamento de logs
+    });
+  }
+};
+export const criarInstituicao = async (req, res) => {
+  try {
+    // Pegando o ID do usuário autenticado (caso use JWT, extraia do token)
+    const userId = req.user?.id || req.body.userId;
+
+    // Logando o ID do usuário para verificar
+    console.log("ID do usuário:", userId);
+
+    if (!userId) {
+      return res.status(400).json({ error: "ID do usuário não fornecido." });
+    }
+
+    // Verificando se o usuário existe
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+    });
+
+    // Logando o usuário para verificar se foi encontrado
+    console.log("Usuário encontrado:", user);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+  
+
+    // Logando antes de criar a instituição para verificar os dados
+    console.log("Dados para criação da instituição:", req.body);
+
+    // Criando a instituição
+    const instituicao = await prisma.instituicaoEspirita.create({
+      data: {
+        nome: req.body.nome,
+        sigla: req.body.sigla,
+        estado: req.body.estado,
+        cidade: req.body.cidade,
+        bairro: req.body.bairro,
+        logradouro: req.body.logradouro,
+        numero: req.body.numero,
+        complemento: req.body.complemento,
+        telefone: req.body.telefone,
+        telefoneDiJ: req.body.telefoneDiJ,
+        dia_evang: req.body.dia_evang,
+        email: req.body.email,
+        criadoPor: {
+          connect: { id: userId }, // Relacionando o usuário com a instituição
+        },
+      },
+    });
+
+    // Logando a instituição criada
+    console.log("Instituição criada:", instituicao);
+
+    return res.status(201).json(instituicao);
+  } catch (error) {
+    // Logando o erro para debug
+    console.error("Erro ao criar instituição:", error);
+    return res.status(500).json({ error: "Erro interno do servidor." });
+  }
+};
+
+export const listarInstituicoes = async (req, res) => {
+  try {
+    // Consultando todas as instituições espíritas no banco de dados
+    const instituicoes = await prisma.instituicaoEspirita.findMany();
+
+    // Retornando a lista de instituições
+    return res.status(200).json(instituicoes);
+  } catch (error) {
+    console.error("Erro ao listar instituições:", error);
+    return res.status(500).json({ error: "Erro interno do servidor." });
   }
 };
