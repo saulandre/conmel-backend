@@ -6,11 +6,13 @@ import {
   verificar,
   validateToken,
   participante,
-  getparticipantes
+  getparticipantes,
+  criarInstituicao,
+  listarInstituicoes
 } from '../controllers/auth.controller.js';
 import { isAuthenticated } from '../middlewares/authMiddleware.js';
 import { validateLogin, validateRegister, validateVerification } from '../../validators/authValidator.js'; // Middlewares de validação
-
+import { isAdmin } from '../middlewares/isAdmin.js';
 const router = Router();
 
 // Middleware de logs para monitorar acesso
@@ -30,7 +32,9 @@ router.post('/enviarcodigo', isAuthenticated, resendVerificationCode);
 router.post('/validartoken', isAuthenticated, validateVerification, validateToken);
 router.post('/inscrever', isAuthenticated, validateVerification, participante);
 router.get('/inscrever', isAuthenticated, validateVerification, participante);
-router.get('/inscricoes', isAuthenticated, validateVerification, getparticipantes);
+router.get('/obterinscricoes', isAuthenticated, validateVerification, getparticipantes);
+router.post('/instituicao', isAuthenticated, validateVerification, isAdmin, criarInstituicao);
+router.get('/listarInstituicoes', isAuthenticated, validateVerification, listarInstituicoes);
 // Middleware de tratamento de erros global
 router.use((err, req, res, next) => {
   console.error('💥 Erro:', err.message);

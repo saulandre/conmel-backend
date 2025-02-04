@@ -12,78 +12,6 @@ enum Role {
   admin
 }
 
-model Users {
-  id                    Int       @id @default(autoincrement())
-  name                  String
-  email                 String    @unique
-  password              String
-  verificationCode      String?   // Se você adicionou esse campo
-  verificationCodeExpiration DateTime? // Se você adicionou esse campo
-  isVerified            Boolean   @default(false)
-  isRole                Role      @default(user) // Utilizando o enum aqui
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  lastVerificationRequest DateTime @default(now())
-  instituicoes          InstituicaoEspirita[]  // Relacionamento com a tabela InstituicaoEspirita
-  @@map("Users")
-  Participante2025 Participante2025[]
-}
-
-model InstituicaoEspirita {
-  id          Int       @id @default(autoincrement())
-  nome        String
-  estado      String
-  cidade      String
-  bairro      String
-  logradouro  String
-  numero      String
-  complemento String
-  telefone    String
-  telefoneDiJ String
-  dia_evang   String
-  email       String?  
-  users       Users[]   // Relacionamento com os usuários
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@map("InstituicaoEspirita")
-}
-
-model Participante2025   {
-  id                         Int       @id @default(autoincrement())
-  nomeCompleto               String    // Obrigatório
-  dataNascimento             DateTime  // Obrigatório
-  sexo                       Sexo      // Obrigatório
-  email                      String?
-  telefone                   String?
-  nomeCompletoResponsavel    String
-  documentoResponsavel       String
-  telefoneResponsavel        String
-  tipoParticipacao           TipoParticipacao  // Obrigatório
-  comissao                   Comissao // Opcional
-  camisa                     Camisa
-  tamanhoCamisa              String
-  cep                        String?
-  estado                     String?
-  cidade                     String?
-  bairro                     String?
-  logradouro                 String?
-  numero                     String?
-  complemento                String
-  numeroCMEJacas             String?
-  medicacao                  String
-  alergia                    String
-  IE                         String?
-  outrasInformacoes          String
-    createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  // Relacionamento com a tabela de Users
-  userId                     Int
-  user                       Users    @relation(fields: [userId], references: [id])
-
-  @@map("Participantes2025")
-}
-
 enum Sexo {
   Masculino
   Feminino
@@ -99,6 +27,96 @@ enum Comissao {
   Recepcao
   Outros
 }
+
 enum Camisa {
-Sim
+  Sim
+  Nao
+}
+
+model Users {
+  id                        Int       @id @default(autoincrement())
+  name                      String
+  email                     String    @unique
+  password                  String
+  verificationCode          String?
+  verificationCodeExpiration DateTime?
+  isVerified                Boolean   @default(false)
+  role                      Role      @default(user) 
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  lastVerificationRequest   DateTime  @default(now())
+
+  // Relacionamentos
+  instituicoes              InstituicaoEspirita[]  
+  Participante2025          Participante2025[]
+  
+  @@map("Users")
+}
+
+
+model InstituicaoEspirita {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  sigla       String?
+  estado      String
+  cidade      String
+  bairro      String
+  logradouro  String
+  numero      String
+  complemento String
+  telefone    String
+  telefoneDiJ String
+  dia_evang   String
+  email       String?
+
+  // Relacionamento opcional para saber quem cadastrou a instituição
+  criadoPorId Int?
+  criadoPor   Users?    @relation(fields: [criadoPorId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  Participante2025 Participante2025[]
+
+  @@map("InstituicaoEspirita")
+}
+
+model Participante2025 {
+  id                     Int       @id @default(autoincrement())
+  nomeCompleto           String
+  dataNascimento         DateTime
+  sexo                   Sexo
+  email                  String?
+  telefone               String?
+  nomeCompletoResponsavel String
+  documentoResponsavel   String
+  telefoneResponsavel    String
+  tipoParticipacao       TipoParticipacao
+  comissao               Comissao?
+  camisa                 Camisa
+  tamanhoCamisa          String
+  cep                    String?
+  estado                 String?
+  cidade                 String?
+  bairro                 String?
+  logradouro             String?
+  numero                 String?
+  complemento            String
+  numeroCMEJacas         String?
+  medicacao              String
+  alergia                String
+  IE                     String?
+  outrasInformacoes      String
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  // Relacionamento com Users (quem fez a inscrição)
+  userId                 Int?
+  user                   Users?    @relation(fields: [userId], references: [id])
+
+  // Relacionamento com InstituicaoEspirita (instituição da inscrição)
+  instituicaoId          Int?
+  instituicao            InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
+
+  @@map("Participantes2025")
 }
