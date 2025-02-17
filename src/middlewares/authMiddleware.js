@@ -1,24 +1,29 @@
 import jwt from 'jsonwebtoken';
 
 export const isAuthenticated = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const authHeader = req.headers.authorization;
+  
+  console.log('Cabeçalhos recebidos:', req.headers);
 
-  // Log para verificar se o token foi extraído corretamente
+  // Verifica se o token foi enviado corretamente
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader;
+
   console.log('Token extraído:', token);
 
   if (!token) {
     return res.status(401).json({ error: 'Acesso não autorizado' });
   }
-
+  console.log('Cabeçalhos recebidos:', req.headers);
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Log para verificar o conteúdo do token decodificado
     console.log('Token decodificado:', decoded);
+    
+    req.userId = decoded.id;
+    console.log('ID do usuário extraído:', req.userId);
 
-    req.user = decoded; // Adiciona o usuário decodificado ao objeto de requisição
     next();
   } catch (error) {
+    console.error('Erro na verificação do token:', error.message);
     return res.status(401).json({ error: 'Token inválido ou expirado' });
   }
 };
