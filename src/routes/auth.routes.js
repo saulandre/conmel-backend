@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { isAuthenticated } from '../middlewares/authMiddleware.js';
 import {
   login,
   register,
@@ -8,9 +9,11 @@ import {
   participante,
   getparticipantes,
   criarInstituicao,
-  listarInstituicoes
+  listarInstituicoes,
+  atualizarInstituicao,
+  updateProfile
 } from '../controllers/auth.controller.js';
-import { isAuthenticated } from '../middlewares/authMiddleware.js';
+
 import { validateLogin, validateRegister, validateVerification } from '../../validators/authValidator.js'; // Middlewares de validação
 import { isAdmin } from '../middlewares/isAdmin.js';
 const router = Router();
@@ -29,12 +32,14 @@ router.post('/registrar', validateRegister, register); // Validação de dados a
 /* router.post('/verificar', isAuthenticated, validateVerification, verificar); */
 router.post('/verificar', isAuthenticated, validateVerification, verificar); // Validação de dados antes de verificar
 router.post('/enviarcodigo', isAuthenticated, resendVerificationCode);
-router.post('/validartoken', isAuthenticated, validateVerification, validateToken);
-router.post('/inscrever', isAuthenticated, validateVerification, participante);
-router.get('/inscrever', isAuthenticated, validateVerification, participante);
-router.get('/obterinscricoes', isAuthenticated, validateVerification, getparticipantes);
-router.post('/instituicao', isAuthenticated, validateVerification, isAdmin, criarInstituicao);
-router.get('/listarInstituicoes', isAuthenticated, validateVerification, listarInstituicoes);
+router.post('/validartoken', isAuthenticated, validateToken);
+router.post('/inscrever', isAuthenticated, participante);
+router.get('/inscrever', isAuthenticated, participante);
+router.get('/obterinscricoes', isAuthenticated, getparticipantes);
+router.post('/novainstituicao', isAuthenticated,  criarInstituicao);
+router.get('/listarinstituicoes', isAuthenticated, listarInstituicoes);
+router.put('/editarinstituicao/:id', isAuthenticated, atualizarInstituicao);
+router.put('/updateProfile/:id', isAuthenticated, updateProfile)
 // Middleware de tratamento de erros global
 router.use((err, req, res, next) => {
   console.error('💥 Erro:', err.message);
