@@ -553,6 +553,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
+        role: user.role
       },
     });
   } catch (error) {
@@ -610,6 +611,8 @@ export const participante = async (req, res) => {
 
   const userId = req.userId
   // Schema de validação completo
+  console.log("Valor de userId:", userId);
+
   const schema = Joi.object({
     // Dados Pessoais
     nomeCompleto: Joi.string().min(3).max(100).required().label('Nome Completo'),
@@ -706,7 +709,8 @@ export const participante = async (req, res) => {
       telefone: req.body.telefone.replace(/\D/g, ''),
       documentoResponsavel: req.body.documentoResponsavel?.replace(/\D/g, '') || null
     };
-
+  
+    
     // Criação do participante
     const novoParticipante = await prisma.participante2025.create({
       data: dadosParticipante,
@@ -760,10 +764,12 @@ export const participante = async (req, res) => {
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
-};export const getparticipantes = async (req, res) => {
+};
+
+export const getparticipantes = async (req, res) => {
   try {
     // 1. Obter ID do usuário corretamente do middleware de autenticação
-    const userId = req.user?.id; // ✅ Correto (assumindo que o middleware populou req.user)
+    const userId = req.userId;  // ✅ Correto (assumindo que o middleware populou req.user)
 
     // 2. Validação reforçada
     if (!userId) {
@@ -819,14 +825,16 @@ export const participante = async (req, res) => {
     });
   }
 };
+
 export const criarInstituicao = async (req, res) => {
   try {
-    // Pegando o ID do usuário autenticado (caso use JWT, extraia do token)
-    const userId = req.user?.id || req.body.userId;
+  
+    const userId = req.userId;
 
     // Logando o ID do usuário para verificar
-    console.log("ID do usuário:", userId);
-
+   
+    console.log("Headers recebidos:", req.headers);
+    console.log("User ID recebido no controlador:", req.userId);
     if (!userId) {
       return res.status(400).json({ error: "ID do usuário não fornecido." });
     }
@@ -853,6 +861,7 @@ export const criarInstituicao = async (req, res) => {
       data: {
         nome: req.body.nome,
         sigla: req.body.sigla,
+        CEU: req.body.CEU,
         estado: req.body.estado,
         cidade: req.body.cidade,
         bairro: req.body.bairro,
@@ -860,8 +869,8 @@ export const criarInstituicao = async (req, res) => {
         numero: req.body.numero,
         complemento: req.body.complemento,
         telefone: req.body.telefone,
-        telefoneDiJ: req.body.telefoneDiJ,
-        dia_evang: req.body.dia_evang,
+        horario: req.body.horario,
+        dia: req.body.dia,
         email: req.body.email,
         criadoPor: {
           connect: { id: userId }, // Relacionando o usuário com a instituição
@@ -892,3 +901,146 @@ export const listarInstituicoes = async (req, res) => {
     return res.status(500).json({ error: "Erro interno do servidor." });
   }
 };
+export const atualizarInstituicao = async (req, res) => {
+  console.log("Request completa:", req); // 🔍 Debug geral da request
+  console.log("ID do usuário recebido:", req.userId); // Verificar se está undefined
+  try {
+    const userId = req.userId;  // Verifique se o 'userId' está sendo passado corretamente pelo middleware
+
+    console.log("ID do usuário:", userId);
+
+    // Verificando se o ID do usuário foi fornecido
+    if (!userId) {
+      return res.status(400).json({ error: "ID do usuário não fornecido." });
+    }
+
+    // Convertendo o ID da instituição para um número inteiro
+    const instituicaoId = parseInt(req.params.id, 10); 
+
+    if (isNaN(instituicaoId)) {
+      return res.status(400).json({ error: "ID da instituição inválido." });
+    }
+
+    // Verificando se o usuário existe e se é administrador
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    // Verificando se o usuário é administrador
+    if (user.role !== 'admin') {
+      return res.status(403).json({ error: "Acesso negado. Somente administradores podem atualizar." });
+    }
+
+    // Verificando se a instituição a ser atualizada existe
+    const instituicao = await prisma.instituicaoEspirita.findUnique({
+      where: { id: instituicaoId },  // Usando o ID convertido
+    });
+
+    if (!instituicao) {
+      return res.status(404).json({ error: "Instituição não encontrada." });
+    }
+    const updatedInstituicao = await prisma.instituicaoEspirita.update({
+      where: { id: instituicaoId }, // ID da instituição
+      data: {
+        nome: req.body.nome || instituicao.nome,
+        sigla: req.body.sigla || instituicao.sigla,
+        CEU: req.body.CEU || instituicao.CEU,
+        estado: req.body.estado || instituicao.estado,
+        cidade: req.body.cidade || instituicao.cidade,
+        bairro: req.body.bairro || instituicao.bairro,
+        logradouro: req.body.logradouro || instituicao.logradouro,
+        numero: req.body.numero || instituicao.numero,
+        complemento: req.body.complemento || instituicao.complemento,
+        telefone: req.body.telefone || instituicao.telefone,
+        horario: req.body.horario || instituicao.horario,
+        dia: req.body.dia || instituicao.dia,
+        email: req.body.email || instituicao.email,
+        atualizadoPorId: userId, // Atualizando o ID do usuário que fez a atualização
+      },
+    });
+    console.log(updatedInstituicao)
+
+    return res.status(200).json(updatedInstituicao);
+  } catch (error) {
+    console.error("Erro ao atualizar a instituição:", error);
+    return res.status(500).json({ error: "Erro interno do servidor." });
+  }
+};
+export const updateProfile = async (req, res) => { 
+  const { userId, name, email, phone, currentPassword, newPassword, communication1, communication2 } = req.body;
+
+  // Validações de dados
+  if (!userId || !name || !email || !currentPassword ) {
+    return res.status(400).send('Todos os campos obrigatórios precisam ser preenchidos.');
+  }
+
+  try {
+    // Verifique a senha atual (assumindo que o sistema armazena senhas de forma segura, com hash)
+    const result = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).send('Usuário não encontrado.');
+    }
+
+    const dbPassword = result.rows[0].password;
+
+    // Aqui você deve comparar a senha atual (com hash) com o banco de dados (não é uma comparação simples de string)
+    if (dbPassword !== currentPassword) {
+      return res.status(403).send('Senha atual incorreta.');
+    }
+
+    // Atualize as informações no banco de dados
+    const updateQuery = `
+      UPDATE users
+      SET name = $1, email = $2, phone = $3, password = $4, communication1 = $5, communication2 = $6
+      WHERE id = $7
+      RETURNING id
+    `;
+    const values = [name, email, phone, newPassword, communication1, communication2, userId];
+
+    const updateResult = await pool.query(updateQuery, values);
+
+    if (updateResult.rows.length === 0) {
+      return res.status(400).send('Falha ao atualizar as informações.');
+    }
+
+    res.status(200).send('Perfil atualizado com sucesso.');
+  } catch (error) {
+    console.error('Erro ao atualizar o perfil:', error);
+    res.status(500).send('Erro ao atualizar o perfil.');
+  }
+}
+
+export const getProfile = async (req, res) => { 
+ 
+    const { userId } = req.params; // O userId será passado via parâmetros de URL
+  
+    try {
+      // Busque os dados do usuário no banco de dados com base no userId
+      const result = await pool.query('SELECT name, email, phone, communication1, communication2 FROM users WHERE id = $1', [userId]);
+  
+      // Verifique se o usuário existe
+      if (result.rows.length === 0) {
+        return res.status(404).send('Usuário não encontrado.');
+      }
+  
+      // Retorne os dados do perfil
+      const user = result.rows[0];
+      res.status(200).json({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        communication1: user.communication1,
+        communication2: user.communication2,
+      });
+    } catch (error) {
+      console.error('Erro ao buscar o perfil:', error);
+      res.status(500).send('Erro ao buscar o perfil.');
+    }
+  };
+  
+
