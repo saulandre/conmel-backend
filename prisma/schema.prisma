@@ -13,8 +13,10 @@ enum Role {
 }
 
 enum Sexo {
-  Masculino
-  Feminino
+  Masculino_SIS
+  Feminino_SIS
+  Masculino_Trans
+  Feminino_Trans
 }
 
 enum TipoParticipacao {
@@ -23,15 +25,17 @@ enum TipoParticipacao {
 }
 
 enum Comissao {
-  Divulgacao
-  Recepcao
-  Outros
+Coordenacao_Geral
+Divulgacao 
+Recepcao 
+Alimentacao 
+Multimeios
+Servicos_Gerais
+Secretaria
+Atendimento_Fraterno
+Estudos_Doutrinarios
 }
 
-enum Camisa {
-  Sim
-  Nao
-}
 
 model Users {
   id                        Int       @id @default(autoincrement())
@@ -41,37 +45,53 @@ model Users {
   verificationCode          String?
   verificationCodeExpiration DateTime?
   isVerified                Boolean   @default(false)
-  role                      Role      @default(user) 
+  role                      Role      @default(user)
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
   lastVerificationRequest   DateTime  @default(now())
 
+
+  telefone                  String?   // Telefone (pode ser nulo)
+  comunicacaocomejaca       String?   // Comunicação com a Mocidade Espírita de Jacarepaguá (pode ser nulo)
+  comunicacaomovimento      String?   // Comunicação com o Movimento Espírita (pode ser nulo)
+
   // Relacionamentos
   instituicoes              InstituicaoEspirita[]  
   Participante2025          Participante2025[]
+
+  // Relacionamento para as instituições criadas por este usuário
+  instituicoesCriadas       InstituicaoEspirita[] @relation(name: "InstituicaoCriadaPor")
   
+  // Relacionamento para as instituições atualizadas por este usuário
+  instituicoesAtualizadas   InstituicaoEspirita[] @relation(name: "InstituicaoAtualizadaPor")
+
   @@map("Users")
 }
-
 
 model InstituicaoEspirita {
   id          Int       @id @default(autoincrement())
   nome        String
-  sigla       String?
-  estado      String
-  cidade      String
-  bairro      String
-  logradouro  String
-  numero      String
-  complemento String
-  telefone    String
-  telefoneDiJ String
-  dia_evang   String
+  CEU         String?
+  sigla       String
+  CNPJ        String @unique
+  estado      String?
+  cidade      String?
+  bairro      String?
+  logradouro  String?
+  numero      String?
+  complemento String?
+  telefone    String?
+  dia         String? 
+  horario     String?
   email       String?
 
-  // Relacionamento opcional para saber quem cadastrou a instituição
+  // Relacionamento para saber quem cadastrou a instituição (criadoPor)
   criadoPorId Int?
-  criadoPor   Users?    @relation(fields: [criadoPorId], references: [id])
+  criadoPor   Users?    @relation(name: "InstituicaoCriadaPor", fields: [criadoPorId], references: [id])
+
+  // Relacionamento para saber quem fez a última atualização (atualizadoPor)
+  atualizadoPorId Int?    // Aqui deve ser o tipo Int? para armazenar o ID do usuário
+  atualizadoPor   Users?  @relation(name: "InstituicaoAtualizadaPor", fields: [atualizadoPorId], references: [id])
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -79,23 +99,27 @@ model InstituicaoEspirita {
   Participante2025 Participante2025[]
 
   @@map("InstituicaoEspirita")
+  Users Users[]
 }
 
+
 model Participante2025 {
-  id                     Int       @id @default(autoincrement())
+  id                     String       @id @default(uuid())
+
   nomeCompleto           String
+  nomeSocial             String?    
   dataNascimento         DateTime
   sexo                   Sexo
-  email                  String?
-  telefone               String?
-  nomeCompletoResponsavel String
-  documentoResponsavel   String
-  telefoneResponsavel    String
+  email                  String
+  telefone               String
+  nomeCompletoResponsavel String?
+  documentoResponsavel   String?
+  telefoneResponsavel    String?
   tipoParticipacao       TipoParticipacao
   comissao               Comissao?
-  camisa                 Camisa
+  camisa                 Boolean?
   tamanhoCamisa          String
-  cep                    String?
+  cep                    String
   estado                 String?
   cidade                 String?
   bairro                 String?
@@ -103,10 +127,11 @@ model Participante2025 {
   numero                 String?
   complemento            String
   numeroCMEJacas         String?
-  medicacao              String
-  alergia                String
-  IE                     String?
-  outrasInformacoes      String
+  vegetariano            String @default("N/A") 
+  medicacao              String?
+  alergia                String?
+  IE                     String
+  outrasInformacoes      String?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
