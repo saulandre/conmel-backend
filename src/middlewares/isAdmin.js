@@ -1,26 +1,30 @@
 import prisma from '../prisma.js';
 
 export const isAdmin = async (req, res, next) => {
-    const userId = req.user?.id || req.body.userId;
-  
+  try {
+    const userId = req.userId; // O middleware de autenticação deve definir `req.userId`
+
     if (!userId) {
-      return res.status(400).json({ error: "ID do usuário não fornecido." });
+      return res.status(401).json({ error: "Usuário não autenticado." });
     }
-  
-    // Verificando se o usuário existe
+
+    // Busca o usuário no banco de dados
     const user = await prisma.users.findUnique({
       where: { id: userId },
     });
-  
+
     if (!user) {
       return res.status(404).json({ error: "Usuário não encontrado." });
     }
-  
-    // Verificando se o usuário tem permissão de admin
+
+    // Verifica se o usuário tem permissão de admin
     if (user.role !== "admin") {
       return res.status(403).json({ error: "Acesso negado. Apenas administradores podem editar instituições." });
     }
-  
-    next(); // Se for admin, permite continuar com a edição
-  };
-  
+
+    next(); // Usuário é admin, prosseguir para a próxima função
+  } catch (error) {
+    console.error("Erro na verificação de admin:", error);
+    return res.status(500).json({ error: "Erro interno do servidor." });
+  }
+};
