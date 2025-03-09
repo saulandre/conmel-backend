@@ -1,10 +1,14 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import prisma from '../prisma.js';
 import { generateVerificationCode } from '../services/validation.js';
 import dotenv from 'dotenv';
 import transporter from '../config/mailer.js';
 import Joi from 'joi';
+import { v4 as uuidv4 } from 'uuid';// Usando import com ES Modules
+import { PrismaClient, Comissao } from '@prisma/client';
+
+// Criando uma instância do PrismaClient
+const prisma = new PrismaClient();
 
 dotenv.config();
 
@@ -608,66 +612,82 @@ export const resendVerificationCode = async (req, res) => {
 };
 
 export const participante = async (req, res) => {
+  const userId = req.userId;
 
-  const userId = req.userId
-  // Schema de validação completo
+  // Log para depuração
   console.log("Valor de userId:", userId);
+  console.log("Dados recebidos:", req.body);
 
+  // Schema de validação completo
   const schema = Joi.object({
     // Dados Pessoais
     nomeCompleto: Joi.string().min(3).max(100).required().label('Nome Completo'),
+    nomeSocial: Joi.string().min(3).max(100).allow(null, '').optional().label('Nome social'),
+
     dataNascimento: Joi.date().iso().max(new Date()).required().label('Data de Nascimento'),
-    sexo: Joi.string().valid(
-      'Masculino', 
-      'Feminino', 
-      
-    ).required().label('Gênero'),
+    sexo: Joi.string().required().label('Gênero'),
     email: Joi.string().email().max(100).required().label('E-mail'),
     telefone: Joi.string().pattern(/^\d{10,11}$/).required().label('Telefone'),
 
     // Responsável (para menores)
-    tipoParticipacao: Joi.string().valid('Confraternista', 'Trabalhador').required().label('Tipo de Participação'),
-    nomeCompletoResponsavel: Joi.when('tipoParticipacao', {
-      is: 'Confraternista',
-      then: Joi.string().min(3).max(100).required(),
-      otherwise: Joi.string().allow(null, '').optional()
-    }).label('Nome do Responsável'),
-    documentoResponsavel: Joi.when('tipoParticipacao', {
-      is: 'Confraternista',
-      then: Joi.string().pattern(/^\d{11}$/).required(),
-      otherwise: Joi.string().allow(null, '').optional()
-    }).label('Documento do Responsável'),
-    telefoneResponsavel: Joi.when('tipoParticipacao', {
-      is: 'Confraternista',
-      then: Joi.string().pattern(/^\d{10,11}$/).required(),
-      otherwise: Joi.string().allow(null, '').optional()
-    }).label('Telefone do Responsável'),
+    tipoParticipacao: Joi.string()
+      .valid('Confraternista', 'Trabalhador')
+      .required()
+      .label('Tipo de Participação'),
+
+    nomeCompletoResponsavel: Joi.string()
+      .min(3)
+      .max(100)
+      .allow(null, '')
+      .optional()
+      .label('Nome do Responsável'),
+
+    documentoResponsavel: Joi.string()
+      .pattern(/^\d{10,11}$/) // Aceita 10 ou 11 dígitos
+      .allow(null, '')
+      .optional()
+      .label('Documento do Responsável'),
+
+    telefoneResponsavel: Joi.string()
+      .pattern(/^\d{10,11}$/) // Aceita 10 ou 11 dígitos
+      .allow(null, '')
+      .optional()
+      .label('Telefone do Responsável'),
 
     // Configuração do Evento
-    comissao: Joi.string().valid('Recepcao').allow(null, '').optional().label('Comissão'),
-    camisa: Joi.string().required().label('Receber Camisa'),
-    tamanhoCamisa: Joi.when('camisa', {
-      is: true,
-      then: Joi.string().valid('PP', 'P', 'M', 'G', 'GG', 'XG').required(),
-      otherwise: Joi.string().allow(null, '').optional()
-    }).label('Tamanho da Camisa'),
+    comissao: Joi.string()
+    .valid(...Object.values(Comissao)) // Permite apenas valores da enum
+    .optional()
+    .label('Comissão'),
+    camisa: Joi.boolean()
+    .optional()
+    .label('Camisa'),
+  
+  tamanhoCamisa: Joi.when('Camisa', {
+    is: Joi.exist(),  // Verifica se o valor de 'camisa' existe
+    then: Joi.string()
+      .valid('PP', 'P', 'M', 'G', 'GG', 'XG') // Permite valores válidos de tamanho de camisa
+      .required(),
+    otherwise: Joi.string()
+      .allow(null, '') // Permite valores nulos ou vazios quando 'camisa' não é fornecido
+      .optional(),
+  }).label('Tamanho da Camisa'),
+    vegetariano: Joi.string().label('Vegetarianismo'),
 
     // Endereço
     cep: Joi.string().pattern(/^\d{5}-?\d{3}$/).required().label('CEP'),
     estado: Joi.string().length(2).required().label('Estado'),
     cidade: Joi.string().max(50).required().label('Cidade'),
-    IE: Joi.string().max(50).required().label('ie'),
+    IE: Joi.string().max(50).required().label('IE'),
     bairro: Joi.string().max(50).required().label('Bairro'),
     logradouro: Joi.string().max(100).required().label('Logradouro'),
     numero: Joi.string().max(10).required().label('Número'),
     complemento: Joi.string().max(50).allow(null, '').optional().label('Complemento'),
 
     // Saúde
-    numeroCMEJacas: Joi.string().pattern(/^CMEJ-\d{4}$/).allow(null, '').optional().label('Número CMEJacas'),
     medicacao: Joi.string().max(500).allow(null, '').optional().label('Medicação'),
     alergia: Joi.string().max(500).allow(null, '').optional().label('Alergia'),
     outrasInformacoes: Joi.string().max(1000).allow(null, '').optional().label('Outras Informações')
-
   }).messages({
     'any.required': 'O campo {{#label}} é obrigatório',
     'string.empty': 'O campo {{#label}} não pode estar vazio',
@@ -694,29 +714,33 @@ export const participante = async (req, res) => {
       where: { id: userId },
       select: { id: true, isVerified: true }
     });
-    
-    if (!usuario) return res.status(404).json({ error: MESSAGES.errors.userNotFound });
-    if (!usuario.isVerified) return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
 
+    if (!usuario) {
+      return res.status(404).json({ error: MESSAGES.errors.userNotFound });
+    }
+    if (!usuario.isVerified) {
+      return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
+    }
 
     // Preparação dos dados
     const dadosParticipante = {
+      id: uuidv4(),
       ...req.body,
       userId,
       dataNascimento: new Date(req.body.dataNascimento),
-      // Normalização de dados
       cep: req.body.cep.replace(/\D/g, ''),
       telefone: req.body.telefone.replace(/\D/g, ''),
-      documentoResponsavel: req.body.documentoResponsavel?.replace(/\D/g, '') || null
+      documentoResponsavel: req.body.documentoResponsavel?.replace(/\D/g, '') || null,
+
     };
-  
-    
+
     // Criação do participante
     const novoParticipante = await prisma.participante2025.create({
       data: dadosParticipante,
       select: {
         id: true,
         nomeCompleto: true,
+        nomeSocial: true,
         dataNascimento: true,
         sexo: true,
         email: true,
@@ -735,9 +759,9 @@ export const participante = async (req, res) => {
         logradouro: true,
         numero: true,
         complemento: true,
-        numeroCMEJacas: true,
         medicacao: true,
         alergia: true,
+        vegetariano: true,
         outrasInformacoes: true,
         IE: true,
         userId: true,
@@ -757,7 +781,13 @@ export const participante = async (req, res) => {
   } catch (error) {
     console.error('Erro no cadastro:', error);
 
-
+    // Tratamento de erros específicos do Prisma
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return res.status(400).json({
+        error: MESSAGES.errors.databaseError,
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
 
     return res.status(500).json({
       error: MESSAGES.errors.internalError,
@@ -832,7 +862,6 @@ export const criarInstituicao = async (req, res) => {
     const userId = req.userId;
 
     // Logando o ID do usuário para verificar
-   
     console.log("Headers recebidos:", req.headers);
     console.log("User ID recebido no controlador:", req.userId);
     if (!userId) {
@@ -851,7 +880,8 @@ export const criarInstituicao = async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado." });
     }
 
-  
+    // Formatando o nome conforme "Sigla - Nome - CNPJ"
+    const nomeFormatado = `${req.body.sigla} - ${req.body.nome}`;
 
     // Logando antes de criar a instituição para verificar os dados
     console.log("Dados para criação da instituição:", req.body);
@@ -859,9 +889,10 @@ export const criarInstituicao = async (req, res) => {
     // Criando a instituição
     const instituicao = await prisma.instituicaoEspirita.create({
       data: {
-        nome: req.body.nome,
+        nome: nomeFormatado,  // Usando o nome formatado
         sigla: req.body.sigla,
         CEU: req.body.CEU,
+        
         estado: req.body.estado,
         cidade: req.body.cidade,
         bairro: req.body.bairro,
@@ -872,6 +903,7 @@ export const criarInstituicao = async (req, res) => {
         horario: req.body.horario,
         dia: req.body.dia,
         email: req.body.email,
+        CNPJ: req.body.CNPJ, // Incluindo o CNPJ se necessário
         criadoPor: {
           connect: { id: userId }, // Relacionando o usuário com a instituição
         },
@@ -888,6 +920,7 @@ export const criarInstituicao = async (req, res) => {
     return res.status(500).json({ error: "Erro interno do servidor." });
   }
 };
+
 
 export const listarInstituicoes = async (req, res) => {
   try {
@@ -1043,4 +1076,78 @@ export const getProfile = async (req, res) => {
     }
   };
   
-
+export const obterInscricao = async (req, res) => {
+    const userId = req.userId; // Obtém o ID do usuário autenticado
+    const { participanteId } = req.params; // Obtém o ID do participante da URL
+  
+    try {
+      // Verifica se o usuário existe e está verificado
+      const usuario = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { id: true, isVerified: true }
+      });
+  
+      if (!usuario) {
+        return res.status(404).json({ error: MESSAGES.errors.userNotFound });
+      }
+      if (!usuario.isVerified) {
+        return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
+      }
+  
+      // Busca a inscrição do participante pelo ID e userId
+      const inscricao = await prisma.participante2025.findUnique({
+        where: { id: participanteId, userId },
+        select: {
+          id: true,
+          nomeCompleto: true,
+          nomeSocial: true,
+          dataNascimento: true,
+          sexo: true,
+          email: true,
+          telefone: true,
+          tipoParticipacao: true,
+          nomeCompletoResponsavel: true,
+          documentoResponsavel: true,
+          telefoneResponsavel: true,
+          comissao: true,
+          camisa: true,
+          tamanhoCamisa: true,
+          cep: true,
+          estado: true,
+          cidade: true,
+          bairro: true,
+          logradouro: true,
+          numero: true,
+          complemento: true,
+          medicacao: true,
+          alergia: true,
+          vegetariano: true,
+          outrasInformacoes: true,
+          IE: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+  
+      // Se não encontrar a inscrição, retorna erro
+      if (!inscricao) {
+        return res.status(404).json({ error: MESSAGES.errors.registrationNotFound });
+      }
+  
+      return res.status(200).json({
+        success: true,
+        message: "Dados da inscrição encontrados com sucesso!",
+        data: inscricao
+      });
+  
+    } catch (error) {
+      console.error("Erro ao buscar inscrição:", error);
+      
+      return res.status(500).json({
+        error: MESSAGES.errors.internalError,
+        details: process.env.NODE_ENV === "development" ? error.message : undefined
+      });
+    }
+  };
+  
