@@ -7,6 +7,7 @@ import {
   verificar,
   validateToken,
   participante,
+  obterInscricao,
   getparticipantes,
   criarInstituicao,
   listarInstituicoes,
@@ -36,8 +37,11 @@ router.post('/validartoken', isAuthenticated, validateToken);
 router.post('/inscrever', isAuthenticated, participante);
 router.get('/inscrever', isAuthenticated, participante);
 router.get('/obterinscricoes', isAuthenticated, getparticipantes);
-router.post('/novainstituicao', isAuthenticated,  criarInstituicao);
-router.get('/listarinstituicoes', isAuthenticated, listarInstituicoes);
+router.get('/print/:participanteId', isAuthenticated, obterInscricao);
+
+
+router.post('/novainstituicao', isAuthenticated, isAdmin,  criarInstituicao);
+router.get('/instituicoes', listarInstituicoes);
 router.put('/editarinstituicao/:id', isAuthenticated, atualizarInstituicao);
 router.put('/updateProfile/:id', isAuthenticated, updateProfile)
 // Middleware de tratamento de erros global
