@@ -7,16 +7,106 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Users {
+  id                         Int                   @id @default(autoincrement())
+  name                       String
+  email                      String                @unique
+  password                   String
+  isVerified                 Boolean               @default(false)
+  createdAt                  DateTime              @default(now())
+  updatedAt                  DateTime              @updatedAt
+  verificationCode           String?
+  verificationCodeExpiration DateTime?
+  lastVerificationRequest    DateTime              @default(now())
+  role                       Role                  @default(user)
+  comunicacaocomejaca        String?
+  comunicacaomovimento       String?
+  telefone                   String?
+  instituicoesAtualizadas    InstituicaoEspirita[] @relation("InstituicaoAtualizadaPor")
+  instituicoesCriadas        InstituicaoEspirita[] @relation("InstituicaoCriadaPor")
+  Participante2025           Participante2025[]
+  instituicoes               InstituicaoEspirita[] @relation("InstituicaoEspiritaToUsers")
+
+  @@map("Users")
+}
+
+model InstituicaoEspirita {
+  id               Int                @id @default(autoincrement())
+  nome             String
+  estado           String?
+  cidade           String?
+  bairro           String?
+  logradouro       String?
+  numero           String?
+  complemento      String?
+  telefone         String?
+  email            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  criadoPorId      Int?
+  sigla            String
+  CEU              String?
+  dia              String?
+  horario          String?
+  atualizadoPorId  Int?
+  CNPJ             String             @unique
+  atualizadoPor    Users?             @relation("InstituicaoAtualizadaPor", fields: [atualizadoPorId], references: [id])
+  criadoPor        Users?             @relation("InstituicaoCriadaPor", fields: [criadoPorId], references: [id])
+  Participante2025 Participante2025[]
+  Users            Users[]            @relation("InstituicaoEspiritaToUsers")
+
+  @@map("InstituicaoEspirita")
+}
+
+model Participante2025 {
+  id                      String               @id @default(uuid())
+  nomeCompleto            String
+  dataNascimento          DateTime
+  sexo                    String
+  email                   String
+  telefone                String
+  nomeCompletoResponsavel String?
+  documentoResponsavel    String?
+  telefoneResponsavel     String?
+  tipoParticipacao        TipoParticipacao
+  comissao                String?
+  tamanhoCamisa           String
+  cep                     String
+  estado                  String?
+  cidade                  String?
+  bairro                  String?
+  logradouro              String?
+  numero                  String?
+  complemento             String
+  numeroCMEJacas          String?
+  medicacao               String?
+  alergia                 String?
+  outrasInformacoes       String?
+  userId                  Int?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  IE                      String
+  instituicaoId           Int?
+  nomeSocial              String?
+  vegetariano             String               @default("N/A")
+  camisa                  Boolean?
+  instituicao             InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
+  user                    Users?               @relation(fields: [userId], references: [id])
+
+  @@map("Participantes2025")
+}
+
 enum Role {
   user
   admin
 }
 
 enum Sexo {
-  Masculino_SIS
-  Feminino_SIS
-  Masculino_Trans
-  Feminino_Trans
+  Masculino_CIS   @map("Masculino CIS")
+  Feminino_CIS    @map("Feminino CIS")
+  Masculino_Trans @map("Masculino Trans")
+  Feminino_Trans  @map("Feminino Trans")
+  Nao_binario     @map("Não Binário")
 }
 
 enum TipoParticipacao {
@@ -25,123 +115,13 @@ enum TipoParticipacao {
 }
 
 enum Comissao {
-Coordenacao_Geral
-Divulgacao 
-Recepcao 
-Alimentacao 
-Multimeios
-Servicos_Gerais
-Secretaria
-Atendimento_Fraterno
-Estudos_Doutrinarios
-}
-
-
-model Users {
-  id                        Int       @id @default(autoincrement())
-  name                      String
-  email                     String    @unique
-  password                  String
-  verificationCode          String?
-  verificationCodeExpiration DateTime?
-  isVerified                Boolean   @default(false)
-  role                      Role      @default(user)
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
-  lastVerificationRequest   DateTime  @default(now())
-
-
-  telefone                  String?   // Telefone (pode ser nulo)
-  comunicacaocomejaca       String?   // Comunicação com a Mocidade Espírita de Jacarepaguá (pode ser nulo)
-  comunicacaomovimento      String?   // Comunicação com o Movimento Espírita (pode ser nulo)
-
-  // Relacionamentos
-  instituicoes              InstituicaoEspirita[]  
-  Participante2025          Participante2025[]
-
-  // Relacionamento para as instituições criadas por este usuário
-  instituicoesCriadas       InstituicaoEspirita[] @relation(name: "InstituicaoCriadaPor")
-  
-  // Relacionamento para as instituições atualizadas por este usuário
-  instituicoesAtualizadas   InstituicaoEspirita[] @relation(name: "InstituicaoAtualizadaPor")
-
-  @@map("Users")
-}
-
-model InstituicaoEspirita {
-  id          Int       @id @default(autoincrement())
-  nome        String
-  CEU         String?
-  sigla       String
-  CNPJ        String @unique
-  estado      String?
-  cidade      String?
-  bairro      String?
-  logradouro  String?
-  numero      String?
-  complemento String?
-  telefone    String?
-  dia         String? 
-  horario     String?
-  email       String?
-
-  // Relacionamento para saber quem cadastrou a instituição (criadoPor)
-  criadoPorId Int?
-  criadoPor   Users?    @relation(name: "InstituicaoCriadaPor", fields: [criadoPorId], references: [id])
-
-  // Relacionamento para saber quem fez a última atualização (atualizadoPor)
-  atualizadoPorId Int?    // Aqui deve ser o tipo Int? para armazenar o ID do usuário
-  atualizadoPor   Users?  @relation(name: "InstituicaoAtualizadaPor", fields: [atualizadoPorId], references: [id])
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  Participante2025 Participante2025[]
-
-  @@map("InstituicaoEspirita")
-  Users Users[]
-}
-
-
-model Participante2025 {
-  id                     String       @id @default(uuid())
-
-  nomeCompleto           String
-  nomeSocial             String?    
-  dataNascimento         DateTime
-  sexo                   Sexo
-  email                  String
-  telefone               String
-  nomeCompletoResponsavel String?
-  documentoResponsavel   String?
-  telefoneResponsavel    String?
-  tipoParticipacao       TipoParticipacao
-  comissao               Comissao?
-  camisa                 Boolean?
-  tamanhoCamisa          String
-  cep                    String
-  estado                 String?
-  cidade                 String?
-  bairro                 String?
-  logradouro             String?
-  numero                 String?
-  complemento            String
-  numeroCMEJacas         String?
-  vegetariano            String @default("N/A") 
-  medicacao              String?
-  alergia                String?
-  IE                     String
-  outrasInformacoes      String?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-
-  // Relacionamento com Users (quem fez a inscrição)
-  userId                 Int?
-  user                   Users?    @relation(fields: [userId], references: [id])
-
-  // Relacionamento com InstituicaoEspirita (instituição da inscrição)
-  instituicaoId          Int?
-  instituicao            InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
-
-  @@map("Participantes2025")
+  Coordena__o_Geral    @map("Coordenação Geral")
+  Divulga__o           @map("Divulgação")
+  Recep__o             @map("Recepção")
+  Alimenta__o          @map("Alimentação")
+  Multimeios
+  Servi_os_Gerais      @map("Serviços Gerais")
+  Secretaria
+  Atendimento_Fraterno @map("Atendimento Fraterno")
+  Estudos_Doutrinarios @map("Estudos Doutrinarios")
 }

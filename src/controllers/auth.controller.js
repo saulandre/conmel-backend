@@ -625,7 +625,7 @@ export const participante = async (req, res) => {
     nomeSocial: Joi.string().min(3).max(100).allow(null, '').optional().label('Nome social'),
 
     dataNascimento: Joi.date().iso().max(new Date()).required().label('Data de Nascimento'),
-    sexo: Joi.string().required().label('Gênero'),
+    sexo: Joi.string().valid('', 'Masculino CIS', 'Feminino CIS', 'Masculino Trans', 'Feminino Trans', 'Não Binário').required().label('Gênero'),
     email: Joi.string().email().max(100).required().label('E-mail'),
     telefone: Joi.string().pattern(/^\d{10,11}$/).required().label('Telefone'),
 
@@ -656,7 +656,7 @@ export const participante = async (req, res) => {
 
     // Configuração do Evento
     comissao: Joi.string()
-    .valid(...Object.values(Comissao)) // Permite apenas valores da enum
+    .valid('', 'Alimentação',  'Atendimento Fraterno', 'Coordenação Geral', 'Divulgação', 'Estudos Doutrinários', 'Multimeios', 'Secretaria', 'Serviços Gerais', 'Recepção')  // Permite apenas valores da enum
     .optional()
     .label('Comissão'),
     camisa: Joi.boolean()
