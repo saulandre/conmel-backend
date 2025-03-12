@@ -683,6 +683,22 @@ export const participante = async (req, res) => {
     logradouro: Joi.string().max(100).required().label('Logradouro'),
     numero: Joi.string().max(10).required().label('Número'),
     complemento: Joi.string().max(50).allow(null, '').optional().label('Complemento'),
+    primeiraComejaca: Joi.boolean().default(false),
+    deficienciaAuditiva: Joi.boolean().default(false),
+    deficienciaAutismo: Joi.boolean().default(false),
+    deficienciaIntelectual: Joi.boolean().default(false),
+    deficienciaParalisiaCerebral: Joi.boolean().default(false),
+    deficienciaVisual: Joi.boolean().default(false),
+    deficienciaFisica: Joi.boolean().default(false),
+    deficienciaOutra: Joi.boolean().default(false),
+    deficienciaOutraDescricao: Joi.when('deficienciaOutra', {
+      is: true,
+      then: Joi.string().required().messages({
+        'string.empty': 'A descrição da deficiência é obrigatória.',
+        'any.required': 'A descrição da deficiência é obrigatória.',
+      }),
+      otherwise: Joi.string().allow('').optional(),
+    }),
 
     // Saúde
     medicacao: Joi.string().max(500).allow(null, '').optional().label('Medicação'),

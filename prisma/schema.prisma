@@ -57,10 +57,10 @@ model InstituicaoEspirita {
 
   @@map("InstituicaoEspirita")
 }
-
 model Participante2025 {
   id                      String               @id @default(uuid())
   nomeCompleto            String
+  nomeSocial              String?
   dataNascimento          DateTime
   sexo                    String
   email                   String
@@ -70,14 +70,14 @@ model Participante2025 {
   telefoneResponsavel     String?
   tipoParticipacao        TipoParticipacao
   comissao                String?
-  tamanhoCamisa           String
+  tamanhoCamisa           String?
   cep                     String
   estado                  String?
   cidade                  String?
   bairro                  String?
   logradouro              String?
   numero                  String?
-  complemento             String
+  complemento             String?
   numeroCMEJacas          String?
   medicacao               String?
   alergia                 String?
@@ -87,9 +87,17 @@ model Participante2025 {
   updatedAt               DateTime             @updatedAt
   IE                      String
   instituicaoId           Int?
-  nomeSocial              String?
   vegetariano             String               @default("N/A")
   camisa                  Boolean?
+  primeiraComejaca        Boolean?             @default(false)
+  deficienciaAuditiva     Boolean?             @default(false)
+  deficienciaAutismo      Boolean?             @default(false)
+  deficienciaIntelectual  Boolean?             @default(false)
+  deficienciaParalisiaCerebral Boolean?        @default(false)
+  deficienciaVisual       Boolean?             @default(false)
+  deficienciaFisica       Boolean?             @default(false)
+  deficienciaOutra        Boolean?             @default(false)
+  deficienciaOutraDescricao String?
   instituicao             InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
   user                    Users?               @relation(fields: [userId], references: [id])
 
