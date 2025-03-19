@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import transporter from '../config/mailer.js';
 import Joi from 'joi';
 import { v4 as uuidv4 } from 'uuid';// Usando import com ES Modules
-import { PrismaClient, Comissao } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 // Criando uma instância do PrismaClient
 const prisma = new PrismaClient();
@@ -31,6 +31,7 @@ const MESSAGES = {
   },
   success: {
     verificationEmailSent: 'Código de verificação enviado. Verifique seu e-mail.',
+    verificationCodeResent: 'Código de verificação enviado com sucesso.',
     verifiedUser: 'Usuário verificado com sucesso!',
     registeredUser: 'Usuário registrado com sucesso!',
     loggedIn: 'Login realizado com sucesso!',
@@ -366,7 +367,11 @@ export const verificar = async (req, res) => {
 
   try {
     // Busca o usuário no banco de dados
-    const user = await prisma.users.findUnique({ where: { id: userId } });
+    const userId = parseInt(req.body.userId, 10); // Converte string para número
+
+    const user = await prisma.users.findUnique({
+      where: { id: userId }
+    });
 
     if (!user) {
       return res.status(404).json({ error: MESSAGES.errors.userNotFound });
@@ -678,12 +683,12 @@ export const participante = async (req, res) => {
     cep: Joi.string().pattern(/^\d{5}-?\d{3}$/).required().label('CEP'),
     estado: Joi.string().length(2).required().label('Estado'),
     cidade: Joi.string().max(50).required().label('Cidade'),
-    IE: Joi.string().max(50).required().label('IE'),
+    IE: Joi.string().max(100).required().label('IE'),
     bairro: Joi.string().max(50).required().label('Bairro'),
     logradouro: Joi.string().max(100).required().label('Logradouro'),
     numero: Joi.string().max(10).required().label('Número'),
     complemento: Joi.string().max(50).allow(null, '').optional().label('Complemento'),
-    primeiraComejaca: Joi.boolean().default(false),
+
     deficienciaAuditiva: Joi.boolean().default(false),
     deficienciaAutismo: Joi.boolean().default(false),
     deficienciaIntelectual: Joi.boolean().default(false),

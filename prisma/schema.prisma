@@ -78,7 +78,7 @@ model Participante2025 {
   logradouro              String?
   numero                  String?
   complemento             String?
-  numeroCMEJacas          String?
+
   medicacao               String?
   alergia                 String?
   outrasInformacoes       String?
@@ -90,13 +90,13 @@ model Participante2025 {
   vegetariano             String               @default("N/A")
   camisa                  Boolean?
   primeiraComejaca        Boolean?             @default(false)
-  deficienciaAuditiva     Boolean?             @default(false)
-  deficienciaAutismo      Boolean?             @default(false)
-  deficienciaIntelectual  Boolean?             @default(false)
-  deficienciaParalisiaCerebral Boolean?        @default(false)
-  deficienciaVisual       Boolean?             @default(false)
-  deficienciaFisica       Boolean?             @default(false)
-  deficienciaOutra        Boolean?             @default(false)
+  deficienciaAuditiva    Boolean?
+  deficienciaAutismo     Boolean?
+  deficienciaIntelectual Boolean?
+  deficienciaParalisiaCerebral Boolean?
+  deficienciaVisual      Boolean?
+  deficienciaFisica      Boolean?
+  deficienciaOutra       Boolean?
   deficienciaOutraDescricao String?
   instituicao             InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
   user                    Users?               @relation(fields: [userId], references: [id])
@@ -122,14 +122,3 @@ enum TipoParticipacao {
   Trabalhador
 }
 
-enum Comissao {
-  Coordena__o_Geral    @map("Coordenação Geral")
-  Divulga__o           @map("Divulgação")
-  Recep__o             @map("Recepção")
-  Alimenta__o          @map("Alimentação")
-  Multimeios
-  Servi_os_Gerais      @map("Serviços Gerais")
-  Secretaria
-  Atendimento_Fraterno @map("Atendimento Fraterno")
-  Estudos_Doutrinarios @map("Estudos Doutrinarios")
-}
