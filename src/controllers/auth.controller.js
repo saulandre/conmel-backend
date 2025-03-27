@@ -688,7 +688,7 @@ export const participante = async (req, res) => {
     logradouro: Joi.string().max(100).required().label('Logradouro'),
     numero: Joi.string().max(10).required().label('Número'),
     complemento: Joi.string().max(50).allow(null, '').optional().label('Complemento'),
-
+    primeiraComejaca: Joi.boolean().default(false),
     deficienciaAuditiva: Joi.boolean().default(false),
     deficienciaAutismo: Joi.boolean().default(false),
     deficienciaIntelectual: Joi.boolean().default(false),
