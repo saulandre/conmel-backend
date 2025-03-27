@@ -1172,3 +1172,33 @@ export const obterInscricao = async (req, res) => {
     }
   };
   
+  export const esquecisenha = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+      // Gerando um token de redefinição (expira em 1 hora)
+      const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+  
+      // Criando o link de redefinição
+      const resetLink = `https://www.comejaca.org.br/redefinir-senha?token=${resetToken}`;
+  
+      // Enviando o e-mail
+      await transporter.sendMail({
+        from: `"Seu App" <${process.env.MAIL_USER}>`,
+        to: email,
+        subject: "Redefinição de Senha",
+        html: `
+          <p>Olá,</p>
+          <p>Você solicitou a redefinição de senha. Clique no link abaixo para cadastrar uma nova senha:</p>
+          <p><a href="${resetLink}" target="_blank">Redefinir Senha</a></p>
+          <p>Se você não solicitou essa mudança, ignore este e-mail.</p>
+          <p>Este link é válido por 1 hora.</p>
+        `,
+      });
+  
+      res.json({ message: "E-mail de redefinição enviado com sucesso!" });
+    } catch (error) {
+      console.error("Erro ao enviar e-mail:", error);
+      res.status(500).json({ error: "Erro ao enviar e-mail." });
+    }
+  };
