@@ -33,6 +33,7 @@ model Users {
 model InstituicaoEspirita {
   id               Int                @id @default(autoincrement())
   nome             String
+  nome_CNPJ        String?
   estado           String?
   cidade           String?
   bairro           String?
@@ -78,7 +79,7 @@ model Participante2025 {
   logradouro              String?
   numero                  String?
   complemento             String?
-
+  outroGenero             String?
   medicacao               String?
   alergia                 String?
   outrasInformacoes       String?
