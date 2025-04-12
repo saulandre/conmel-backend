@@ -808,7 +808,7 @@ dadosParticipante.cep = req.body.cep && typeof req.body.cep === 'string' ? req.b
     
     
     
-    const userId = req.userId;
+ 
 
     
 
@@ -1293,6 +1293,7 @@ const preferenceData = {
           deficienciaFisica: true,
           deficienciaOutra: true,
           deficienciaOutraDescricao: true,
+          statusPagamento: true,
           userId: true,
           createdAt: true,
           updatedAt: true
