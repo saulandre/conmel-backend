@@ -463,9 +463,10 @@ const RESEND_INTERVAL = 60000; // 60 segundos
   try {
 
     const isStrongPassword = (password) => {
-      const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]{8,}$/;
       return strongPasswordRegex.test(password);
     };
+    
     // Validação dos campos
     if (!name || !email || !password) {
       return res.status(400).json({ error: MESSAGES.errors.missingFields });
