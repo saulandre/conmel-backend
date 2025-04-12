@@ -766,16 +766,37 @@ const mercadopago = require('mercadopago');
       return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
     }
 
-    // Preparar dados do participante
     const dadosParticipante = {
       id: uuidv4(),
       ...req.body,
       userId,
       dataNascimento: new Date(req.body.dataNascimento),
-      cep: req.body.cep.replace(/\D/g, ''),
-      telefone: req.body.telefone.replace(/\D/g, ''),
-      documentoResponsavel: req.body.documentoResponsavel?.replace(/\D/g, '') || null,
     };
+    
+    console.log("Dados antes de tratar telefone e CEP:", dadosParticipante);
+    
+    // Verificação de telefone e CEP
+    const camposComErro = ['cep', 'telefone', 'telefoneResponsavel', 'documentoResponsavel'];
+    
+    camposComErro.forEach(campo => {
+      if (req.body[campo] !== undefined) {
+        console.log(`${campo}:`, req.body[campo]);
+      }
+    });
+    console.log('CEP:', req.body.cep); // Adicione isso antes da linha de tratamento
+dadosParticipante.cep = req.body.cep && typeof req.body.cep === 'string' ? req.body.cep.replace(/\D/g, '') : '';
+
+ 
+    dadosParticipante.telefone = req.body.telefone && typeof req.body.telefone === 'string' ? req.body.telefone.replace(/\D/g, '') : '';
+    dadosParticipante.telefoneResponsavel = req.body.telefoneResponsavel && typeof req.body.telefoneResponsavel === 'string' ? req.body.telefoneResponsavel.replace(/\D/g, '') : '';
+    dadosParticipante.documentoResponsavel = req.body.documentoResponsavel && typeof req.body.documentoResponsavel === 'string' ? req.body.documentoResponsavel.replace(/\D/g, '') : '';
+    
+    console.log("Dados após tratar telefone e CEP:", dadosParticipante);
+    
+    
+    
+    
+    
 
     // Calcular idade
     const idade = calcularIdade(dadosParticipante.dataNascimento);
@@ -805,11 +826,7 @@ const preferenceData = {
   payer: {
     email: email,
     name: nomeCompleto,
-    identification: {
-      type: "CPF",
-      number: cpf.replace(/\D/g, '') 
-    }
-  },
+     },
   payment_methods: {
     excluded_payment_methods: [], 
     excluded_payment_types: [],
