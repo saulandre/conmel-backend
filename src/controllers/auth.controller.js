@@ -846,7 +846,7 @@ const preferenceData = {
       excluded_payment_methods: [
         { id: 'boleto' }, 
       ],
-      excluded_payment_types: [],
+      excluded_payment_types: ['ticket'], 
       installments: 1, 
     },
   notification_url: `${BASE_URL}/api/mercadopago/notificacao`,
