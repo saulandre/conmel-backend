@@ -660,11 +660,7 @@ const mercadopago = require('mercadopago');
     sexo: Joi.string().required().label('Gênero'),
     email: Joi.string().email().max(100).required().label('E-mail'),
     telefone: Joi.string().pattern(/^\d{10,11}$/).required().label('Telefone'),
-    cpf: Joi.string()
-    .pattern(/^\d{11}$/)
-    .message('CPF deve conter exatamente 11 dígitos numéricos')
-    .required()
-    .label('CPF'),
+
     // Responsável (para menores)
     tipoParticipacao: Joi.string()
       .valid('Confraternista', 'Trabalhador')
@@ -677,12 +673,12 @@ const mercadopago = require('mercadopago');
       .optional()
       .label('Nome do Responsável'),
     documentoResponsavel: Joi.string()
-      .pattern(/^\d{10,11}$/) 
+      /* .pattern(/^\d{10,11}$/)  */
       .allow(null, '')
       .optional()
       .label('Documento do Responsável'),
     telefoneResponsavel: Joi.string()
-      .pattern(/^\d{10,11}$/) 
+      /*  */
       .allow(null, '')
       .optional()
       .label('Telefone do Responsável'),
@@ -692,19 +688,18 @@ const mercadopago = require('mercadopago');
       .valid('', 'Alimentação',  'Atendimento Fraterno', 'Coordenação Geral', 'Divulgação', 'Estudos Doutrinários', 'Multimeios', 'Secretaria', 'Serviços Gerais', 'Recepção')
       .optional()
       .label('Comissão'),
-    camisa: Joi.boolean()
+      camisa: Joi.boolean()
       .optional()
       .label('Camisa'),
+    
     tamanhoCamisa: Joi.when('camisa', {
-      is: Joi.exist(),
-      then: Joi.string()
-        .valid('PP', 'P', 'M', 'G', 'GG', 'XG')
-        .required(),
-      otherwise: Joi.string()
-        .allow(null, '')
-        .optional(),
-    }).label('Tamanho da Camisa'),
+      is: true,
+      then: Joi.string().required().label('Tamanho da Camisa'), 
+      otherwise: Joi.string().allow('').optional()
+    }),
+    
     vegetariano: Joi.string().label('Vegetarianismo'),
+    
 
     // Endereço
     cep: Joi.string().pattern(/^\d{5}-?\d{3}$/).required().label('CEP'),
@@ -853,7 +848,7 @@ const preferenceData = {
         select: {
           id: true,
           nomeCompleto: true,
-          cpf: true,
+
           nomeSocial: true,
           dataNascimento: true,
           sexo: true,
