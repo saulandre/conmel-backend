@@ -26,7 +26,8 @@ model Users {
   instituicoesCriadas        InstituicaoEspirita[] @relation("InstituicaoCriadaPor")
   Participante2025           Participante2025[]
   instituicoes               InstituicaoEspirita[] @relation("InstituicaoEspiritaToUsers")
-
+  passwordResetTokens        PasswordResetToken[]
+ resetTokenVersion  Int      @default(0)
   @@map("Users")
 }
 
@@ -58,49 +59,55 @@ model InstituicaoEspirita {
 
   @@map("InstituicaoEspirita")
 }
+
 model Participante2025 {
-  id                      String               @id @default(uuid())
-  nomeCompleto            String
-  nomeSocial              String?
-  dataNascimento          DateTime
-  sexo                    String
-  email                   String
-  telefone                String
-  nomeCompletoResponsavel String?
-  documentoResponsavel    String?
-  telefoneResponsavel     String?
-  tipoParticipacao        TipoParticipacao
-  comissao                String?
-  tamanhoCamisa           String?
-  cep                     String
-  estado                  String?
-  cidade                  String?
-  bairro                  String?
-  logradouro              String?
-  numero                  String?
-  complemento             String?
-  outroGenero             String?
-  medicacao               String?
-  alergia                 String?
-  outrasInformacoes       String?
-  userId                  Int?
-  createdAt               DateTime             @default(now())
-  updatedAt               DateTime             @updatedAt
-  IE                      String
-  instituicaoId           Int?
-  vegetariano             String               @default("N/A")
-  camisa                  Boolean?
-  primeiraComejaca        Boolean?             @default(false)
-  deficienciaAuditiva    Boolean?
-  deficienciaAutismo     Boolean?
-  deficienciaIntelectual Boolean?
+  id                           String               @id @default(uuid())
+  nomeCompleto                 String
+  cpf                          String?
+  nomeSocial                   String?
+  dataNascimento               DateTime
+  sexo                         String
+  email                        String
+  telefone                     String
+  nomeCompletoResponsavel      String?
+  documentoResponsavel         String?
+  telefoneResponsavel          String?
+  linkPagamento                String?
+  idade                        Int?
+  valor                        Float?
+  statusPagamento              String?
+  tipoParticipacao             TipoParticipacao
+  comissao                     String?
+  tamanhoCamisa                String?
+  cep                          String
+  estado                       String?
+  cidade                       String?
+  bairro                       String?
+  logradouro                   String?
+  numero                       String?
+  complemento                  String?
+  outroGenero                  String?
+  medicacao                    String?
+  alergia                      String?
+  outrasInformacoes            String?
+  userId                       Int?
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime             @updatedAt
+  IE                           String
+  instituicaoId                Int?
+  vegetariano                  String               @default("N/A")
+  camisa                       Boolean?
+  primeiraComejaca             Boolean?             @default(false)
+  deficienciaAuditiva          Boolean?
+  deficienciaAutismo           Boolean?
+  deficienciaIntelectual       Boolean?
   deficienciaParalisiaCerebral Boolean?
-  deficienciaVisual      Boolean?
-  deficienciaFisica      Boolean?
-  deficienciaOutra       Boolean?
-  deficienciaOutraDescricao String?
-  instituicao             InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
-  user                    Users?               @relation(fields: [userId], references: [id])
+  deficienciaVisual            Boolean?
+  deficienciaFisica            Boolean?
+  deficienciaOutra             Boolean?
+  deficienciaOutraDescricao    String?
+  instituicao                  InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
+  user                         Users?               @relation(fields: [userId], references: [id])
 
   @@map("Participantes2025")
 }
@@ -123,3 +130,13 @@ enum TipoParticipacao {
   Trabalhador
 }
 
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      Users    @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("PasswordResetToken")
+}

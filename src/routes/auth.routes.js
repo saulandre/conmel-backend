@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import { isAuthenticated } from '../middlewares/authMiddleware.js';
-import {
+const express = require('express');
+const { isAuthenticated } = require('../middlewares/authMiddleware.js');
+const {
   login,
   register,
   resendVerificationCode,
@@ -12,12 +12,23 @@ import {
   criarInstituicao,
   listarInstituicoes,
   atualizarInstituicao,
-  updateProfile
-} from '../controllers/auth.controller.js';
+  updateProfile,
+  paymentId,
+  forgotPassword,
+  resetPassword
+} = require('../controllers/auth.controller.js');
 
-import { validateLogin, validateRegister, validateVerification } from '../../validators/authValidator.js'; // Middlewares de validação
-import { isAdmin } from '../middlewares/isAdmin.js';
-const router = Router();
+const {
+  validateLogin,
+  validateRegister,
+  validateVerification
+} = require('../../validators/authValidator.js');
+
+const { isAdmin } = require('../middlewares/isAdmin.js');
+
+const router = express.Router();
+
+
 
 // Middleware de logs para monitorar acesso
 router.use((req, res, next) => {
@@ -38,12 +49,16 @@ router.post('/inscrever', isAuthenticated, participante);
 router.get('/inscrever', isAuthenticated, participante);
 router.get('/obterinscricoes', isAuthenticated, getparticipantes);
 router.get('/print/:participanteId', isAuthenticated, obterInscricao);
+router.get('/pagamento/:id', isAuthenticated, paymentId);
 
 
 router.post('/novainstituicao', isAuthenticated, isAdmin,  criarInstituicao);
 router.get('/instituicoes', listarInstituicoes);
 router.put('/editarinstituicao/:id', isAuthenticated, atualizarInstituicao);
 router.put('/updateProfile/:id', isAuthenticated, updateProfile)
+
+router.post('/forgot-password', forgotPassword);
+router.post('/recuperarsenha', resetPassword);
 // Middleware de tratamento de erros global
 router.use((err, req, res, next) => {
   console.error('💥 Erro:', err.message);
@@ -52,4 +67,4 @@ router.use((err, req, res, next) => {
 
 
 
-export default router;
+module.exports = router;

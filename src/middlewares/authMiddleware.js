@@ -1,6 +1,7 @@
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken');
 
-export const isAuthenticated = (req, res, next) => {
+
+ const isAuthenticated = (req, res, next) => {
   const authHeader = req.headers.authorization;
   
   console.log('Cabeçalhos recebidos:', req.headers);
@@ -27,3 +28,4 @@ export const isAuthenticated = (req, res, next) => {
     return res.status(401).json({ error: 'Token inválido ou expirado' });
   }
 };
+module.exports = { isAuthenticated };

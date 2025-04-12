@@ -1,10 +1,10 @@
-import express from 'express'
-import cors from 'cors'
-import helmet from 'helmet'
-import dotenv from 'dotenv'
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const dotenv = require('dotenv');
 
-import { PrismaClient } from '@prisma/client'
-import authRoutes from './routes/auth.routes.js'
+const { PrismaClient } = require('@prisma/client');
+const authRoutes = require('./routes/auth.routes');
 
 // Configuração inicial
 dotenv.config()
@@ -26,23 +26,34 @@ app.use(express.urlencoded({ extended: true }))
 
 
 app.use('/api/auth', authRoutes)
-
 app.get('/api/health', async (req, res) => {
+  const services = {
+    api: 'UP',
+    database: 'UP'
+  };
+
+  let dbOk = true;
+
   try {
-    await prisma.$queryRaw`SELECT 1`
-    res.status(200).json({
-      status: 'OK',
-      message: 'API and database connection are healthy',
-      timestamp: new Date().toISOString()
-    })
-  } catch (error) {
-    res.status(503).json({
-      status: 'DOWN',
-      message: 'Database connection failed',
-      error: error.message
-    })
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (err) {
+    services.database = 'DOWN';
+    dbOk = false;
   }
-})
+
+  const status = dbOk ? 'UP' : services.api === 'UP' ? 'PARTIAL' : 'DOWN';
+
+  res.status(dbOk ? 200 : 503).json({
+    status,
+    services,
+    message: dbOk
+      ? 'Working...'
+      : 'API is up but database connection failed',
+    timestamp: new Date().toISOString()
+  });
+});
+
+
 
 app.use((err, req, res, next) => {
   console.error(`🚨 Erro capturado: ${err.message}`)
@@ -73,4 +84,4 @@ const shutdown = async () => {
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
 
-export { app, prisma }
+module.exports = { app, prisma };

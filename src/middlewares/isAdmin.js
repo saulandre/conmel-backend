@@ -1,6 +1,6 @@
-import prisma from '../prisma.js';
+const prisma = require('../prisma');
 
-export const isAdmin = async (req, res, next) => {
+const isAdmin = async (req, res, next) => {
   try {
     const userId = req.userId; // O middleware de autenticação deve definir `req.userId`
 
@@ -28,3 +28,4 @@ export const isAdmin = async (req, res, next) => {
     return res.status(500).json({ error: "Erro interno do servidor." });
   }
 };
+module.exports = { isAdmin };
