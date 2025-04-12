@@ -844,7 +844,8 @@ const preferenceData = {
      payment_methods: {
   
       excluded_payment_methods: [
-        { id: 'boleto' }, 
+        { id: 'ticket' }, 
+        { id: 'atm' }   
       ],
       excluded_payment_types: [], 
       installments: 1, 
