@@ -778,9 +778,9 @@ const mercadopago = require('mercadopago');
     if (!usuario.isVerified) {
       return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
     }
-
+    const participanteId = uuidv4();
     const dadosParticipante = {
-      id: uuidv4(),
+      id: participanteId,
       ...req.body,
       userId,
       dataNascimento: new Date(req.body.dataNascimento),
@@ -808,7 +808,8 @@ dadosParticipante.cep = req.body.cep && typeof req.body.cep === 'string' ? req.b
     
     
     
-    
+    const userId = req.userId;
+
     
 
     // Calcular idade
@@ -817,7 +818,7 @@ dadosParticipante.cep = req.body.cep && typeof req.body.cep === 'string' ? req.b
     // Definir valor da inscrição
     const valor = idade < 11 ? 45 : 60;
 
-    const { email, nomeCompleto, cpf } = req.body;
+    const { email, nomeCompleto, id } = req.body;
 
     // Criar preferência de pagamento com o Mercado Pago
     const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
@@ -840,17 +841,24 @@ const preferenceData = {
   payer: {
     email: email,
     name: nomeCompleto,
+
      },
+
+     metadata: {
+       participanteId:  dadosParticipante.id
+    },
      payment_methods: {
   
       excluded_payment_methods: [
         { id: 'ticket' }, 
         { id: 'atm' }   
       ],
-      excluded_payment_types: [], 
+      excluded_payment_types: [
+        { id: 'ticket' }
+      ], 
       installments: 1, 
     },
-  notification_url: `${BASE_URL}/api/mercadopago/notificacao`,
+  notification_url: `${BASE_URL}/api/auth/mercadopago/notificacao`,
   back_urls: {
     success: `${FRONTEND_URL}/sucesso`,
     failure: `${FRONTEND_URL}/falha`,
@@ -1245,7 +1253,6 @@ const preferenceData = {
         return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
       }
   
-      // Busca a inscrição do participante pelo ID e userId
       const inscricao = await prisma.participante2025.findUnique({
         where: { id: participanteId, userId },
         select: {
@@ -1275,12 +1282,23 @@ const preferenceData = {
           vegetariano: true,
           outrasInformacoes: true,
           IE: true,
+          outroGenero: true,
+          otherInstitution: true,
+          primeiraComejaca: true,
+          deficienciaAuditiva: true,
+          deficienciaAutismo: true,
+          deficienciaIntelectual: true,
+          deficienciaParalisiaCerebral: true,
+          deficienciaVisual: true,
+          deficienciaFisica: true,
+          deficienciaOutra: true,
+          deficienciaOutraDescricao: true,
           userId: true,
           createdAt: true,
-          updatedAt: true,
-          outroGenero: true
+          updatedAt: true
         }
       });
+      
   
       // Se não encontrar a inscrição, retorna erro
       if (!inscricao) {
@@ -1529,5 +1547,93 @@ const preferenceData = {
     }
   };
   
+  const listarParticipantes = async (req, res) => {
+    try {
+      const participantes = await prisma.participante2025.findMany({
+        select: {
+          nomeCompleto: true,
+          IE: true,
+          statusPagamento: true,
+          linkPagamento: true,
+        },
+      });
+  
+      return res.status(200).json({
+        success: true,
+        data: participantes,
+      });
+    } catch (error) {
+      console.error('Erro ao listar participantes:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar os participantes.',
+      });
+    }
+  };
 
-  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword };
+
+  const notificacao = async (req, res) => {
+    try {
+ // Verificação da assinatura secreta
+ const signature = req.headers['x-signature'];
+ const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET; // Defina a assinatura secreta no .env
+
+ const payload = JSON.stringify(req.body);
+ const hash = crypto
+   .createHmac('sha256', secret)
+   .update(payload)
+   .digest('hex');
+
+ if (signature !== hash) {
+   console.warn('Assinatura inválida do webhook!');
+   return res.status(401).send('Assinatura inválida');
+ }
+
+
+      console.log('Webhook recebido:', req.body);
+  
+      const paymentId = req.body.data?.id;
+      const topic = req.body.type;
+  
+      if (topic !== 'payment') {
+        return res.status(200).send('Notificação ignorada');
+      }
+  
+      const client = new mercadopago.MercadoPagoConfig({
+        accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
+      });
+  
+      const payment = await mercadopago.Payment.findById(client, paymentId);
+      const paymentInfo = payment.body;
+  
+      const status = paymentInfo.status; // 'approved', 'pending', etc
+      const metadata = paymentInfo.metadata;
+  
+      const participanteId = metadata.participanteId;
+  
+      console.log('Pagamento recebido para participante:', participanteId, 'Status:', status);
+  
+      if (!participanteId) {
+        return res.status(400).send('ParticipanteId ausente na metadata');
+      }
+  
+      // Atualiza no banco (com Prisma)
+      await prisma.participante2025.update({
+        where: { id: participanteId },
+        data: {
+          statusPagamento: status,
+        },
+      });
+  
+      return res.status(200).send('OK');
+    } catch (err) {
+      console.error('Erro no webhook:', err);
+      return res.status(500).send('Erro interno');
+    }
+  };
+  
+
+  
+
+  
+  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao}

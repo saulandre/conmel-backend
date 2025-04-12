@@ -15,7 +15,9 @@ const {
   updateProfile,
   paymentId,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  listarParticipantes,
+  notificacao
 } = require('../controllers/auth.controller.js');
 
 const {
@@ -50,12 +52,12 @@ router.get('/inscrever', isAuthenticated, participante);
 router.get('/obterinscricoes', isAuthenticated, getparticipantes);
 router.get('/print/:participanteId', isAuthenticated, obterInscricao);
 router.get('/pagamento/:id', isAuthenticated, paymentId);
-
-
+router.get('/pagamentos', isAuthenticated, listarParticipantes);
+router.post('/mercadopago/notificacao', notificacao);
 router.post('/novainstituicao', isAuthenticated, isAdmin,  criarInstituicao);
 router.get('/instituicoes', listarInstituicoes);
 router.put('/editarinstituicao/:id', isAuthenticated, atualizarInstituicao);
-router.put('/updateProfile/:id', isAuthenticated, updateProfile)
+router.put('/updateProfile/:id', isAuthenticated, isAdmin, updateProfile)
 
 router.post('/forgot-password', forgotPassword);
 router.post('/recuperarsenha', resetPassword);
