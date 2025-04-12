@@ -831,7 +831,7 @@ const preference = new mercadopago.Preference(client);
 const preferenceData = {
   items: [
     {
-      title: 'Inscrição para COMEJACA',
+      title: 'COMEJACA | INSCRIÇÃO',
       quantity: 1,
       currency_id: 'BRL',
       unit_price: Number(valor),
