@@ -632,16 +632,32 @@ const RESEND_INTERVAL = 60000; // 60 segundos
 
 
 
-function calcularIdade(dataNascimento) {
-  const hoje = new Date();
+const calcularIdade = (dataNascimento) => {
+  // Data de referência para cálculo da idade (19/07/2025)
+  const dataReferencia = new Date('2025-07-19');
+  
+  // Cria um objeto Date com a data de nascimento fornecida
   const nascimento = new Date(dataNascimento);
-  let idade = hoje.getFullYear() - nascimento.getFullYear();
-  const m = hoje.getMonth() - nascimento.getMonth();
-  if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
-    idade--;
+
+  // Calcula a diferença em anos
+  let idade = dataReferencia.getFullYear() - nascimento.getFullYear();
+
+  // Ajusta caso o aniversário do usuário ainda não tenha ocorrido no ano de 2025
+  const mesReferencia = dataReferencia.getMonth();
+  const mesNascimento = nascimento.getMonth();
+  const diaReferencia = dataReferencia.getDate();
+  const diaNascimento = nascimento.getDate();
+
+  if (
+    mesReferencia < mesNascimento ||
+    (mesReferencia === mesNascimento && diaReferencia < diaNascimento)
+  ) {
+    idade--; // Se o aniversário ainda não passou, subtrai um ano
   }
+
   return idade;
-}// No topo do seu arquivo
+};
+
 
 const mercadopago = require('mercadopago');
 
@@ -677,11 +693,7 @@ const mercadopago = require('mercadopago');
       .allow(null, '')
       .optional()
       .label('Documento do Responsável'),
-    telefoneResponsavel: Joi.string()
-      /*  */
-      .allow(null, '')
-      .optional()
-      .label('Telefone do Responsável'),
+      telefoneResponsavel: Joi.string().pattern(/^\d{10,11}$/).allow(null, '').optional().label('Telefone do Responsável'),
 
     // Configuração do Evento
     comissao: Joi.string()
@@ -712,6 +724,7 @@ const mercadopago = require('mercadopago');
     complemento: Joi.string().max(50).allow(null, '').optional().label('Complemento'),
     primeiraComejaca: Joi.boolean().default(false),
     deficienciaAuditiva: Joi.boolean().default(false),
+    otherInstitution: Joi.string().allow(null, '').optional().label('Outra Instituição'),
     deficienciaAutismo: Joi.boolean().default(false),
     deficienciaIntelectual: Joi.boolean().default(false),
     deficienciaParalisiaCerebral: Joi.boolean().default(false),
@@ -802,7 +815,8 @@ dadosParticipante.cep = req.body.cep && typeof req.body.cep === 'string' ? req.b
     const idade = calcularIdade(dadosParticipante.dataNascimento);
 
     // Definir valor da inscrição
-    const valor = idade < 11 ? 80 : 120;
+    const valor = idade < 11 ? 45 : 60;
+
     const { email, nomeCompleto, cpf } = req.body;
 
     // Criar preferência de pagamento com o Mercado Pago
@@ -827,11 +841,14 @@ const preferenceData = {
     email: email,
     name: nomeCompleto,
      },
-  payment_methods: {
-    excluded_payment_methods: [], 
-    excluded_payment_types: [],
-    installments: 3,
-  },
+     payment_methods: {
+  
+      excluded_payment_methods: [
+        { id: 'boleto' }, 
+      ],
+      excluded_payment_types: [],
+      installments: 1, 
+    },
   notification_url: `${BASE_URL}/api/mercadopago/notificacao`,
   back_urls: {
     success: `${FRONTEND_URL}/sucesso`,
@@ -902,6 +919,7 @@ const preferenceData = {
           valor: true,
           linkPagamento: true,
           statusPagamento: true,
+          otherInstitution: true
         },
       });
       console.log('Resposta do MercadoPago:', mpResponse);

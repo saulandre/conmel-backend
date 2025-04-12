@@ -106,6 +106,8 @@ model Participante2025 {
   deficienciaFisica            Boolean?
   deficienciaOutra             Boolean?
   deficienciaOutraDescricao    String?
+  otherInstitution             String?
+  
   instituicao                  InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
   user                         Users?               @relation(fields: [userId], references: [id])
 
