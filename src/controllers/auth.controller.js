@@ -1376,7 +1376,36 @@ const preferenceData = {
     }
   };
   
-
+  
+  const AtualizarpaymentId = async (req, res) => {
+    const { id } = req.params;
+    const { statusPagamento } = req.body;
+  
+    console.log('ID do participante:', id); // Adicione este log para verificar o id
+  
+    try {
+      // Verifique se o participante existe
+      const participante = await prisma.participante2025.findUnique({
+        where: { id },
+      });
+  
+      if (!participante) {
+        return res.status(404).json({ success: false, error: 'Participante não encontrado' });
+      }
+  
+      // Atualiza o status de pagamento
+      const updated = await prisma.participante2025.update({
+        where: { id },
+        data: { statusPagamento },
+      });
+  
+      return res.status(200).json({ success: true, data: updated });
+    } catch (error) {
+      console.error('Erro ao atualizar status de pagamento:', error);
+      return res.status(500).json({ success: false, error: 'Erro ao atualizar status de pagamento' });
+    }
+  };
+  
 
   const forgotPassword = async (req, res) => {
     const { email } = req.body;
@@ -1552,6 +1581,7 @@ const preferenceData = {
     try {
       const participantes = await prisma.participante2025.findMany({
         select: {
+          id: true,
           nomeCompleto: true,
           IE: true,
           statusPagamento: true,
@@ -1637,4 +1667,4 @@ const preferenceData = {
   
 
   
-  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao}
+  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId}
