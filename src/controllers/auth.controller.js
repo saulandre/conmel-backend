@@ -48,6 +48,11 @@ const RESEND_INTERVAL = 60000; // 60 segundos
   try {
     await transporter.sendMail({
       from: `"COMEJACA" <${process.env.MAIL_USER}>`,
+      headers: {
+        'X-Mailer': 'Nodemailer',
+        'X-Priority': '3',
+        'Return-Path': 'process.env.MAIL_USER' 
+      },
       to: email,
       subject: 'Confirmação de Cadastro',
       html: `
@@ -62,7 +67,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
               font-family: 'Arial', sans-serif;
               margin: 0;
               padding: 30px 0;
-              background-color: #22223b;
+              background-color: #F2F2F2;
 ;
             }
             .container {
@@ -131,7 +136,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
         
 
               <p>Atenciosamente,<br>
-              Equipe de Tecnologia COMEJACA</p>
+              Equipe COMEJACA</p>
             </div>
 
             <div class="footer">
@@ -156,6 +161,11 @@ const RESEND_INTERVAL = 60000; // 60 segundos
   try {
     await transporter.sendMail({
       from: `"COMEJACA" <${process.env.MAIL_USER}>`,
+      headers: {
+        'X-Mailer': 'Nodemailer',
+        'X-Priority': '3',
+        'Return-Path': 'process.env.MAIL_USER' 
+      },
       to: email,
       subject: '✅ Conta Verificada',
       html: `
@@ -170,7 +180,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
               font-family: 'Arial', sans-serif;
               margin: 0;
               padding: 30px 0;
-              background-color: #22223b;
+              background-color: #F2F2F2;
             }
             .container {
               max-width: 680px;
@@ -229,7 +239,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
               <p>Estamos empenhados em fazer você ter a melhor experiência.</p>
 
               <p>Atenciosamente,<br>
-              Equipe de Tecnologia COMEJACA</p>
+              Equipe COMEJACA</p>
             </div>
 
             <div class="footer">
