@@ -585,7 +585,8 @@ const RESEND_INTERVAL = 60000; // 60 segundos
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
-        role: user.role
+        role: user.role,
+      
       },
     });
   } catch (error) {
@@ -964,6 +965,72 @@ const preferenceData = {
   }
 };
 
+const updateInscricao = async (req, res) => {
+  const { id } = req.params;
+  const dadosParticipante = req.body;
+
+  try {
+    // Verifica se o ID foi passado
+    if (!id) {
+      return res.status(400).json({ error: 'ID do participante não informado.' });
+    }
+
+    const participanteAtualizado = await prisma.participante2025.update({
+      where: { id },
+      data: dadosParticipante,
+      select: {
+        id: true,
+        nomeCompleto: true,
+        nomeSocial: true,
+        dataNascimento: true,
+        sexo: true,
+        email: true,
+        telefone: true,
+        tipoParticipacao: true,
+        nomeCompletoResponsavel: true,
+        documentoResponsavel: true,
+        telefoneResponsavel: true,
+        cep: true,
+        estado: true,
+        cidade: true,
+        IE: true,
+        bairro: true,
+        logradouro: true,
+        numero: true,
+        complemento: true,
+        vegetariano: true,
+        camisa: true,
+        tamanhoCamisa: true,
+        primeiraComejaca: true,
+        deficienciaAuditiva: true,
+        deficienciaAutismo: true,
+        deficienciaIntelectual: true,
+        deficienciaParalisiaCerebral: true,
+        deficienciaVisual: true,
+        deficienciaFisica: true,
+        deficienciaOutra: true,
+        deficienciaOutraDescricao: true,
+        medicacao: true,
+        alergia: true,
+        outrasInformacoes: true,
+        outroGenero: true,
+        valor: true,
+        linkPagamento: true,
+        statusPagamento: true,
+        otherInstitution: true
+      },
+    });
+
+    return res.status(200).json(participanteAtualizado);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({
+      error: 'Erro ao atualizar participante.',
+      detalhes: error.message
+    });
+  }
+};
 
  const getparticipantes = async (req, res) => {
   try {
@@ -1673,8 +1740,55 @@ const preferenceData = {
     }
   };
   
+const atualizarPerfil = async (req, res) => {
+  const { nome, email, telefone, comunicacaocomejaca, comunicacaomovimento, senha } = req.body;
+  console.log('Dados recebidos para atualização:', req.body);
+
+  try {
+    const userId = req.userId; // Pega o ID do usuário autenticado pelo token
+    console.log('ID do usuário extraído:', userId);
+
+    // Encontrar o usuário
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+    });
+
+    // Verificar se o usuário existe
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Prepara os dados de atualização
+    const updateData = {
+      name: nome,
+      email: email,
+      telefone: telefone,
+      comunicacaocomejaca: comunicacaocomejaca,
+      comunicacaomovimento: comunicacaomovimento,
+      updatedAt: new Date(),
+    };
+
+    // Se a senha for fornecida, criptografa a nova senha
+    if (senha) {
+      const hashedPassword = await bcrypt.hash(senha, 10);
+      updateData.password = hashedPassword;
+    }
+
+    const updatedUser = await prisma.users.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    return res.status(200).json({
+      message: 'Perfil atualizado com sucesso',
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar o perfil:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar o perfil' });
+  }
+};
+
 
   
-
-  
-  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId}
+  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil, updateInscricao}
