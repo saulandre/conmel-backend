@@ -683,6 +683,7 @@ const mercadopago = require('mercadopago');
     // Dados Pessoais
     nomeCompleto: Joi.string().min(3).max(100).required().label('Nome Completo'),
     nomeSocial: Joi.string().min(3).max(100).allow(null, '').optional().label('Nome social'),
+    nomeCracha: Joi.string().min(2).max(100).allow(null, '').required().label('Nome no crachá'),
     dataNascimento: Joi.date().iso().max(new Date()).required().label('Data de Nascimento'),
     sexo: Joi.string().required().label('Gênero'),
     email: Joi.string().email().max(100).required().label('E-mail'),
@@ -902,7 +903,7 @@ const preferenceData = {
         select: {
           id: true,
           nomeCompleto: true,
-
+          nomeCracha: true,
           nomeSocial: true,
           dataNascimento: true,
           sexo: true,
@@ -981,6 +982,7 @@ const updateInscricao = async (req, res) => {
       select: {
         id: true,
         nomeCompleto: true,
+        nomeCracha: true,
         nomeSocial: true,
         dataNascimento: true,
         sexo: true,

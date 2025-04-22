@@ -63,6 +63,7 @@ model InstituicaoEspirita {
 model Participante2025 {
   id                           String               @id @default(uuid())
   nomeCompleto                 String
+  nomeCracha                   String?
   cpf                          String?
   nomeSocial                   String?
   dataNascimento               DateTime
