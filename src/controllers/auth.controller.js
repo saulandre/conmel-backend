@@ -709,7 +709,7 @@ const mercadopago = require('mercadopago');
 
     // Configuração do Evento
     comissao: Joi.string()
-      .valid('', 'Alimentação',  'Atendimento Fraterno', 'Coordenação Geral', 'Divulgação', 'Estudos Doutrinários', 'Multimeios', 'Secretaria', 'Serviços Gerais', 'Recepção')
+      .valid('', 'Alimentação',  'Atendimento Fraterno', 'Núcleo Gestor', 'Divulgação', 'Estudos Doutrinários', 'Multimeios', 'Secretaria', 'Serviços Gerais', 'Recepção')
       .optional()
       .label('Comissão'),
       camisa: Joi.boolean()
