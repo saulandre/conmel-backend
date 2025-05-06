@@ -685,7 +685,7 @@ const mercadopago = require('mercadopago');
     nomeSocial: Joi.string().min(3).max(100).allow(null, '').optional().label('Nome social'),
     nomeCracha: Joi.string().min(2).max(100).allow(null, '').required().label('Nome no crachá'),
     dataNascimento: Joi.date().iso().max(new Date()).required().label('Data de Nascimento'),
-    sexo: Joi.string().required().label('Gênero'),
+    sexo: Joi.string().required().label('Pronome'),
     email: Joi.string().email().max(100).required().label('E-mail'),
     telefone: Joi.string().pattern(/^\d{10,11}$/).required().label('Telefone'),
 
@@ -827,7 +827,7 @@ dadosParticipante.cep = req.body.cep && typeof req.body.cep === 'string' ? req.b
     // Calcular idade
     const idade = calcularIdade(dadosParticipante.dataNascimento);
 
-    // Definir valor da inscrição
+/*     // Definir valor da inscrição
     const valor = idade < 11 ? 45 : 60;
 
     const { email, nomeCompleto, id } = req.body;
@@ -894,7 +894,7 @@ const preferenceData = {
       dadosParticipante.valor = valor;
       dadosParticipante.linkPagamento = linkPagamento;
       dadosParticipante.statusPagamento = 'pendente';
-
+ */
       console.log('Dados que vão pro banco:', dadosParticipante);
       console.log('Prisma Client:', prisma);
       // Criação do participante no banco
@@ -937,9 +937,9 @@ const preferenceData = {
           alergia: true,
           outrasInformacoes: true,
           outroGenero: true,
-          valor: true,
-          linkPagamento: true,
-          statusPagamento: true,
+       //   valor: true,
+       //   linkPagamento: true,
+       //   statusPagamento: true,
           otherInstitution: true
         },
       });
@@ -950,14 +950,14 @@ const preferenceData = {
         message: MESSAGES.success.participantCreated,
         data: novoParticipante,
       });
-    } catch (paymentError) {
+    } /* catch (paymentError) {
       console.error('Erro ao criar pagamento:', paymentError);
       return res.status(500).json({
         error: MESSAGES.errors.paymentError,
         details: paymentError.message,
       });
     }
-  } catch (err) {
+  }  */catch (err) {
     console.error('Erro ao processar participante:', err);
     return res.status(500).json({
       error: MESSAGES.errors.internalError,

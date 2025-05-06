@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./prisma/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id                         Int                   @id @default(autoincrement())
+  name                       String
+  email                      String                @unique
+  password                   String
+  isVerified                 Boolean               @default(false)
+  createdAt                  DateTime              @default(now())
+  updatedAt                  DateTime              @updatedAt
+  verificationCode           String?
+  verificationCodeExpiration DateTime?
+  lastVerificationRequest    DateTime              @default(now())
+  role                       Role                  @default(user)
+  comunicacaocomejaca        String?
+  comunicacaomovimento       String?
+  telefone                   String?
+  instituicoesAtualizadas    InstituicaoEspirita[] @relation("InstituicaoAtualizadaPor")
+  instituicoesCriadas        InstituicaoEspirita[] @relation("InstituicaoCriadaPor")
+  Participante2025           Participante2025[]
+  instituicoes               InstituicaoEspirita[] @relation("InstituicaoEspiritaToUsers")
+  passwordResetTokens        PasswordResetToken[]
+  resetTokenVersion          Int                   @default(0)
+
+  @@map("Users")
+}
+
+model InstituicaoEspirita {
+  id               Int                @id @default(autoincrement())
+  nome             String
+  nome_CNPJ        String?
+  estado           String?
+  cidade           String?
+  bairro           String?
+  logradouro       String?
+  numero           String?
+  complemento      String?
+  telefone         String?
+  email            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  criadoPorId      Int?
+  sigla            String
+  CEU              String?
+  dia              String?
+  horario          String?
+  atualizadoPorId  Int?
+  CNPJ             String             @unique
+  atualizadoPor    Users?             @relation("InstituicaoAtualizadaPor", fields: [atualizadoPorId], references: [id])
+  criadoPor        Users?             @relation("InstituicaoCriadaPor", fields: [criadoPorId], references: [id])
+  Participante2025 Participante2025[]
+  Users            Users[]            @relation("InstituicaoEspiritaToUsers")
+
+  @@map("InstituicaoEspirita")
+}
+
+model Participante2025 {
+  id                           String           @id @default(uuid())
+  nomeCompleto                 String
+  nomeCracha                   String?
+  cpf                          String?
+  nomeSocial                   String?
+  dataNascimento               DateTime
+  sexo                         String
+  email                        String
+  telefone                     String
+  nomeCompletoResponsavel      String?
+  documentoResponsavel         String?
+  telefoneResponsavel          String?
+  linkPagamento                String?
+  idade                        Int?
+  valor                        Float?
+  statusPagamento              String?
+  tipoParticipacao             TipoParticipacao
+  comissao                     String?
+  tamanhoCamisa                String?
+  cep                          String
+  estado                       String?
+  cidade                       String?
+  bairro                       String?
+  logradouro                   String?
+  numero                       String?
+  complemento                  String?
+  outroGenero                  String?
+  medicacao                    String?
+  alergia                      String?
+  outrasInformacoes            String?
+  userId                       Int?
+  createdAt                    DateTime         @default(now())
+  updatedAt                    DateTime         @updatedAt
+  IE                           String
+  instituicaoId                Int?
+  vegetariano                  String           @default("N/A")
+  camisa                       Boolean?
+  primeiraComejaca             Boolean?         @default(false)
+  deficienciaAuditiva          Boolean?
+  deficienciaAutismo           Boolean?
+  deficienciaIntelectual       Boolean?
+  deficienciaParalisiaCerebral Boolean?
+  deficienciaVisual            Boolean?
+  deficienciaFisica            Boolean?
+  deficienciaOutra             Boolean?
+  deficienciaOutraDescricao    String?
+  otherInstitution             String?
+
+  instituicao InstituicaoEspirita? @relation(fields: [instituicaoId], references: [id])
+  user        Users?               @relation(fields: [userId], references: [id])
+
+  @@map("Participantes2025")
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum Sexo {
+  Masculino_CIS   @map("Masculino CIS")
+  Feminino_CIS    @map("Feminino CIS")
+  Masculino_Trans @map("Masculino Trans")
+  Feminino_Trans  @map("Feminino Trans")
+  Nao_binario     @map("Não Binário")
+}
+
+enum TipoParticipacao {
+  Confraternista
+  Trabalhador
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      Users    @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("PasswordResetToken")
+}
