@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.3",
-    "prisma": "^6.5.0"
+    "prisma": "^6.7.0"
   },
   "license": "MIT"
 }

@@ -47,7 +47,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
  const newAccountEmail = async (name, email, code) => {
   try {
     await transporter.sendMail({
-      from: `"COMEJACA" <${process.env.MAIL_USER}>`,
+      from: `"CONMEL" <${process.env.MAIL_USER}>`,
       headers: {
         'X-Mailer': 'Nodemailer',
         'X-Priority': '3',
@@ -125,7 +125,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
             <div class="content">
               <p>Olá ${name},</p>
               
-              <p>O seu cadastro no Sistema de <strong>Portal COMEJACA</strong> está quase completo. <br><br>Para acessar sem restrições você precisa verificar o seu e-mail. <br> <br> Insira o código abaixo em <a href="https://www.comejaca.org.br" target="_blank">COMEJACA</a>.</p>
+              <p>O seu cadastro no <strong>Portal CONMEL</strong> está quase completo. <br><br>Para acessar sem restrições você precisa verificar o seu e-mail. <br> <br> Insira o código abaixo em <a href="https://www.conmelrj.com.br" target="_blank">COMEJACA</a>.</p>
 
               <div class="code-container">
                 <div class="verification-code">${code}</div>
@@ -136,13 +136,13 @@ const RESEND_INTERVAL = 60000; // 60 segundos
         
 
               <p>Atenciosamente,<br>
-              Equipe COMEJACA</p>
+              Equipe CONMEL</p>
             </div>
 
             <div class="footer">
               <p>Esta é uma mensagem automática. Por favor não responda este e-mail.</p>
-              <p>Dúvidas? Contate-nos: suporte@comejaca.org.br </p>
-              <p>© ${new Date().getFullYear()} COMEJACA Gestão. Todos os direitos reservados.</p>
+              <p>Dúvidas? Contate-nos: conmelespiritarj@gmail.com </p>
+              <p>© ${new Date().getFullYear()} CONMEL App. Todos os direitos reservados.</p>
             </div>
           </div>
         </body>
@@ -160,7 +160,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
  const accountVerifiedEmail = async (name, email) => {
   try {
     await transporter.sendMail({
-      from: `"COMEJACA" <${process.env.MAIL_USER}>`,
+      from: `"CONMEL" <${process.env.MAIL_USER}>`,
       headers: {
         'X-Mailer': 'Nodemailer',
         'X-Priority': '3',
@@ -230,7 +230,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
             <div class="content">
               <p>Olá ${name},</p>
               
-              <p>Informamos que seu acesso ao <strong>Portal COMEJACA</strong> foi verificado com sucesso!</p>
+              <p>Informamos que seu acesso ao <strong>Portal CONMEL</strong> foi verificado com sucesso!</p>
 
     
 
@@ -239,13 +239,13 @@ const RESEND_INTERVAL = 60000; // 60 segundos
               <p>Estamos empenhados em fazer você ter a melhor experiência.</p>
 
               <p>Atenciosamente,<br>
-              Equipe COMEJACA</p>
+              Equipe CONMEL</p>
             </div>
 
             <div class="footer">
               <p>Esta é uma mensagem automática. Por favor não responda este e-mail.</p>
-              <p>Dúvidas? Contate-nos: suporte@comejaca.org.br </p>
-              <p>© ${new Date().getFullYear()} COMEJACA Gestão. Todos os direitos reservados.</p>
+              <p>Dúvidas? Contate-nos: conmelespiritarj@gmail.com </p>
+              <p>© ${new Date().getFullYear()} CONMEL app. Todos os direitos reservados.</p>
             </div>
           </div>
         </body>
@@ -263,7 +263,7 @@ const RESEND_INTERVAL = 60000; // 60 segundos
  const novoCodigoEmail = async (name, email, code) => {
   try {
     await transporter.sendMail({
-      from: `"COMEJACA" <${process.env.MAIL_USER}>`,
+      from: `"CONMEL" <${process.env.MAIL_USER}>`,
       to: email,
       subject: 'Novo código',
       html: `
@@ -329,13 +329,13 @@ const RESEND_INTERVAL = 60000; // 60 segundos
         <body>
           <div class="container">
             <div class="header">
-              <img src="https://i.postimg.cc/CxwC6HnL/favicon.png" alt="Logo COMEJACA">
+              <img src="https://i.postimg.cc/CxwC6HnL/favicon.png" alt="Logo CONMEL">
             </div>
             
             <div class="content">
               <p>Prezado(a) ${name},</p>
               
-              <p>Seu cadastro no Sistema de <strong>Portal COMEJACA</strong>  está quase completo. <br><br> O próximo passo é verificar seu endereço e-mail inserindo o código abaixo através do portal <a href="https://www.comejaca.org.br" target="_blank">COMEJACA</a>.</p>
+              <p>Seu cadastro no  <strong>Portal CONMEL</strong>  está quase completo. <br><br> O próximo passo é verificar seu endereço e-mail inserindo o código abaixo através do portal <a href="https://www.conmelrj.com.br" target="_blank">CONMEL</a>.</p>
 
               <div class="code-container">
                 <div class="verification-code">${code}</div>
@@ -346,13 +346,13 @@ const RESEND_INTERVAL = 60000; // 60 segundos
         
 
               <p>Atenciosamente,<br>
-              Equipe de Tecnologia COMEJACA</p>
+              Equipe CONMEL</p>
             </div>
 
             <div class="footer">
               <p>Esta é uma mensagem automática. Por favor não responda este e-mail.</p>
-              <p>Dúvidas? Contate-nos: suporte@comejaca.org.br </p>
-              <p>© ${new Date().getFullYear()} COMEJACA Gestão. Todos os direitos reservados.</p>
+              <p>Dúvidas? Contate-nos: conmelespiritarj@gmail.com </p>
+              <p>© ${new Date().getFullYear()} CONMEL App. Todos os direitos reservados.</p>
             </div>
           </div>
         </body>
@@ -844,7 +844,7 @@ const preference = new mercadopago.Preference(client);
 const preferenceData = {
   items: [
     {
-      title: 'COMEJACA | INSCRIÇÃO',
+      title: 'CONMEL | INSCRIÇÃO',
       quantity: 1,
       currency_id: 'BRL',
       unit_price: Number(valor),
@@ -1409,7 +1409,7 @@ const updateInscricao = async (req, res) => {
       const resetToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
   
       // Criando o link de redefinição
-      const resetLink = `https://www.comejaca.org.br/redefinir-senha?token=${resetToken}`;
+      const resetLink = `https://www.conmelrj.com.br/redefinir-senha?token=${resetToken}`;
   
       // Enviando o e-mail
       await transporter.sendMail({
@@ -1498,11 +1498,11 @@ const updateInscricao = async (req, res) => {
       { expiresIn: '1h' }
     );
   
-    const resetLink = `http://comejaca.org.br/recuperarsenha/route?token=${token}`;
+    const resetLink = `http://conmelrj.com.br/recuperarsenha/route?token=${token}`;
   
     try {
       await transporter.sendMail({
-        from: `"COMEJACA" <${process.env.MAIL_USER}>`,
+        from: `"CONMEL" <${process.env.MAIL_USER}>`,
         headers: {
           'X-Mailer': 'Nodemailer',
           'X-Priority': '3',
@@ -1579,7 +1579,7 @@ const updateInscricao = async (req, res) => {
               <div class="content">
                 <p>Olá ${user.name},</p>
                 
-                <p>Recebemos uma solicitação para redefinir sua senha no <strong>Portal COMEJACA</strong>.</p>
+                <p>Recebemos uma solicitação para redefinir sua senha no <strong>Portal CONMEL</strong>.</p>
                 <p>Se você não solicitou, pode ignorar esta mensagem. </p>
       
                 <div class="button-container">
@@ -1589,13 +1589,13 @@ const updateInscricao = async (req, res) => {
                 <p>🔒 Este link é válido por 15 minutos.</p>
       
                 <p>Atenciosamente,<br>
-                Equipe COMEJACA</p>
+                Equipe CONMEL</p>
               </div>
       
               <div class="footer">
                 <p>Esta é uma mensagem automática. Por favor, não responda este e-mail.</p>
-                <p>Dúvidas? Contate-nos: suporte@comejaca.org.br</p>
-                <p>© ${new Date().getFullYear()} COMEJACA Gestão. Todos os direitos reservados.</p>
+                <p>Dúvidas? Contate-nos: conmelespiritarj@gmail.com</p>
+                <p>© ${new Date().getFullYear()} CONMEL App. Todos os direitos reservados.</p>
               </div>
             </div>
           </body>
