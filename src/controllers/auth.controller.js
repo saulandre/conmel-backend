@@ -943,7 +943,7 @@ const preferenceData = {
           otherInstitution: true
         },
       });
-      console.log('Resposta do MercadoPago:', mpResponse);
+ //    console.log('Resposta do MercadoPago:', mpResponse);
       // Retornar dados do participante
       return res.status(201).json({
         success: true,
