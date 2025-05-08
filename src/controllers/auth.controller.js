@@ -1337,6 +1337,7 @@ const updateInscricao = async (req, res) => {
         select: {
           id: true,
           nomeCompleto: true,
+          nomeCracha: true,
           nomeSocial: true,
           dataNascimento: true,
           sexo: true,
