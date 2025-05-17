@@ -6,11 +6,12 @@ const transporter = require('../config/mailer');
 const Joi = require('joi');
 const { v4: uuidv4 } = require('uuid');
 const { PrismaClient, Prisma } = require('@prisma/client');
-
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 const prisma = new PrismaClient();
-
 dotenv.config();
-
 
 // Constantes atualizadas para mensagens
 const MESSAGES = {
@@ -41,7 +42,61 @@ const MESSAGES = {
   },
 };
 
-// Configurações
+// const supabase = require('../config/supabase'); // Arquivo de configuração separado
+
+const enviarComprovante = async (req, res) => { // Adicione req e res como parâmetros
+  try {
+    // Validação
+    if (!req.body.nome || !req.file) {
+      return res.status(400).json({ error: 'Nome e comprovante são obrigatórios' });
+    }
+
+    // Upload para o Supabase Storage
+    const fileName = `comprovante-${Date.now()}-${req.file.originalname}`;
+    const { error: uploadError } = await supabase.storage
+      .from('comprovantes')
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+      });
+
+    if (uploadError) {
+      throw new Error(`Erro no upload: ${uploadError.message}`);
+    }
+
+    // Construir URL pública
+    const publicUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/comprovantes/${fileName}`;
+
+    // Inserção no banco de dados
+    const { data, error } = await supabase
+      .from('pagamentos')
+      .insert([{
+        nome: req.body.nome,
+        comprovante_url: publicUrl,
+        status: 'pendente'
+      }]);
+
+    if (error) {
+      throw new Error(`Erro no banco de dados: ${error.message}`);
+    }
+
+    return res.status(201).json({ // Adicione return aqui
+      success: true,
+      message: 'Comprovante enviado com sucesso!',
+      data
+    });
+
+  } catch (error) {
+    console.error('Erro no controller:', error);
+    
+    // Verifica se a resposta já foi enviada
+    if (!res.headersSent) {
+      return res.status(500).json({
+        error: 'Erro ao processar solicitação',
+        details: error.message.replace(/supabase_key=[^\s&]+/gi, '[REDACTED]') // Esconde dados sensíveis
+      });
+    }
+  }
+};
 const CODE_EXPIRATION_TIME = 15 * 60 * 1000; // 15 minutos
 const RESEND_INTERVAL = 60000; // 60 segundos
  const newAccountEmail = async (name, email, code) => {
@@ -156,6 +211,15 @@ const RESEND_INTERVAL = 60000; // 60 segundos
     throw new Error('Falha no envio do e-mail');
   }
 };
+
+// Configuração do Multer
+const upload = multer({ dest: 'uploads/' });
+
+
+
+
+
+
 
  const accountVerifiedEmail = async (name, email) => {
   try {
@@ -1794,4 +1858,4 @@ const atualizarPerfil = async (req, res) => {
 
 
   
-  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil, updateInscricao}
+  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil, updateInscricao, enviarComprovante}
