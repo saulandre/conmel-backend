@@ -65,15 +65,7 @@ router.put('/updateProfile/:id', isAuthenticated, isAdmin, updateProfile)
 router.put('/pagamentos/:id/status', isAuthenticated, isAdmin, AtualizarpaymentId);
 router.put('/atualizarPerfil/', isAuthenticated, atualizarPerfil)
 router.put('/participante/:id', isAuthenticated, updateInscricao);
-router.post('/enviar-comprovante', 
-  upload.single('comprovante'), // Middleware Multer
-  (req, res, next) => { // Middleware para log
-    console.log("Arquivo recebido:", req.file);
-    console.log("Dados do corpo:", req.body);
-    next();
-  },
-  enviarComprovante
-);
+
 router.post('/forgot-password', forgotPassword);
 router.post('/recuperarsenha', resetPassword);
 // Middleware de tratamento de erros global
