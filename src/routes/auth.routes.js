@@ -21,16 +21,9 @@ const {
   AtualizarpaymentId,
   atualizarPerfil,
   updateInscricao,
-<<<<<<< HEAD
   enviarEmailComArquivo
 } = require('../controllers/auth.controller.js');
 const upload = require('../config/upload');
-=======
-  enviarComprovante
-} = require('../controllers/auth.controller.js');
-const upload = require('../middlewares/upload');
-
->>>>>>> 754ce3137d8905f8e3329bcff7fa7c1f3b8a39f0
 const {
   validateLogin,
   validateRegister,

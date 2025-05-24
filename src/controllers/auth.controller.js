@@ -1946,8 +1946,4 @@ const enviarEmailComArquivo = async (nomeCompleto, arquivo) => {
 };
 
   
-<<<<<<< HEAD
   module.exports = { esquecisenha, enviarEmailComArquivo, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil, updateInscricao}
-=======
-  module.exports = { esquecisenha, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil, updateInscricao, enviarComprovante}
->>>>>>> 754ce3137d8905f8e3329bcff7fa7c1f3b8a39f0
