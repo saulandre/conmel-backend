@@ -20,9 +20,10 @@ const {
   notificacao,
   AtualizarpaymentId,
   atualizarPerfil,
-  updateInscricao
+  updateInscricao,
+  enviarEmailComArquivo
 } = require('../controllers/auth.controller.js');
-
+const upload = require('../config/upload');
 const {
   validateLogin,
   validateRegister,
@@ -33,6 +34,7 @@ const { isAdmin } = require('../middlewares/isAdmin.js');
 
 const router = express.Router();
 
+const fs = require('fs');
 
 
 // Middleware de logs para monitorar acesso
@@ -73,6 +75,29 @@ router.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
+router.post('/enviar-comprovante', upload.single('arquivo'), async (req, res) => {
+  const { nomeCompleto, email } = req.body;
+  const arquivo = req.file;
+
+  if (!nomeCompleto || !arquivo) {
+    return res.status(400).json({ erro: 'Nome completo e arquivo são obrigatórios.' });
+  }
+
+  try {
+    await enviarEmailComArquivo(nomeCompleto, arquivo);
+    res.status(200).json({ mensagem: 'Comprovante enviado com sucesso!' });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  } finally {
+    fs.unlink(arquivo.path, (err) => {
+      if (err) {
+        console.error('Erro ao remover arquivo temporário:', err);
+      } else {
+        console.log('Arquivo temporário removido:', arquivo.path);
+      }
+    });
+  }
+});
 
 
 module.exports = router;
