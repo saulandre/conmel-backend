@@ -114,6 +114,16 @@ model Participante2025 {
 
   @@map("Participantes2025")
 }
+model Pagamento {
+  id               Int              @id @default(autoincrement())
+  nomeparticipante   String
+  comprovanteUrl String
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@map("Pagamentos")
+}
 
 enum Role {
   user

@@ -21,9 +21,16 @@ const {
   AtualizarpaymentId,
   atualizarPerfil,
   updateInscricao,
+<<<<<<< HEAD
   enviarEmailComArquivo
 } = require('../controllers/auth.controller.js');
 const upload = require('../config/upload');
+=======
+  enviarComprovante
+} = require('../controllers/auth.controller.js');
+const upload = require('../middlewares/upload');
+
+>>>>>>> 754ce3137d8905f8e3329bcff7fa7c1f3b8a39f0
 const {
   validateLogin,
   validateRegister,
@@ -35,7 +42,6 @@ const { isAdmin } = require('../middlewares/isAdmin.js');
 const router = express.Router();
 
 const fs = require('fs');
-
 
 // Middleware de logs para monitorar acesso
 router.use((req, res, next) => {
@@ -66,7 +72,15 @@ router.put('/updateProfile/:id', isAuthenticated, isAdmin, updateProfile)
 router.put('/pagamentos/:id/status', isAuthenticated, isAdmin, AtualizarpaymentId);
 router.put('/atualizarPerfil/', isAuthenticated, atualizarPerfil)
 router.put('/participante/:id', isAuthenticated, updateInscricao);
-
+router.post('/enviar-comprovante', 
+  upload.single('comprovante'), // Middleware Multer
+  (req, res, next) => { // Middleware para log
+    console.log("Arquivo recebido:", req.file);
+    console.log("Dados do corpo:", req.body);
+    next();
+  },
+  enviarComprovante
+);
 router.post('/forgot-password', forgotPassword);
 router.post('/recuperarsenha', resetPassword);
 // Middleware de tratamento de erros global
