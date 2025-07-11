@@ -1430,11 +1430,11 @@ const resetLink = url.toString();
         <body>
           <div class="container">
             <div class="header">
-              <img src="https://raw.githubusercontent.com/saulandre/emei-backend/main/src/public/favicon.png" alt="Logo EMEI" />
+     <img src="https://i.postimg.cc/FKjK70kV/favicon.png" alt="Logo CONMEL">
             </div>
             <div class="content">
               <p>Olá ${user.nome || 'usuário'},</p>
-              <p>Você solicitou a redefinição da sua senha no <strong>Portal EMEI</strong>.</p>
+              <p>Você solicitou a redefinição da sua senha no <strong>Portal CONMEL</strong>.</p>
               <p>Para criar uma nova senha, clique no botão abaixo:</p>
               <div style="text-align: center;">
                 <a class="button" href="${resetLink}" target="_blank">Redefinir Senha</a>
@@ -1445,8 +1445,8 @@ const resetLink = url.toString();
             </div>
             <div class="footer">
               <p>Esta é uma mensagem automática. Por favor, não responda este e-mail.</p>
-              <p>Dúvidas? Contate-nos: emeiiraja23@gmail.com</p>
-              <p>© ${new Date().getFullYear()} EMEI App. Todos os direitos reservados.</p>
+              <p>Dúvidas? Contate-nos: conmelespiritarj@gmail.com</p>
+              <p>© ${new Date().getFullYear()} CONMEL App. Todos os direitos reservados.</p>
             </div>
           </div>
         </body>
@@ -2059,8 +2059,7 @@ const enviarEmailComArquivo = async (nomeCompleto, arquivo) => {
         <body>
           <div class="container">
             <div class="header">
-              <img src="https://raw.githubusercontent.com/saulandre/conmel/main/public/favicon.png" 
- alt="Logo EMEI" />
+               <img src="https://i.postimg.cc/FKjK70kV/favicon.png" alt="Logo CONMEL">
             </div>
             <div class="content">
               <p>Prezado(a) ${nomeCompleto},</p>
