@@ -1305,6 +1305,8 @@ const updateInscricao = async (req, res) => {
     return res.status(500).json({ error: "Erro interno do servidor." });
   }
 };
+
+
  const updateProfile = async (req, res) => { 
   const { userId, name, email, phone, currentPassword, newPassword, communication1, communication2 } = req.body;
 
@@ -1349,7 +1351,152 @@ const updateInscricao = async (req, res) => {
     res.status(500).send('Erro ao atualizar o perfil.');
   }
 }
+const enviarEmailRedefinicao = async (req, res) => {
+  const { email } = req.body;
 
+  try {
+    // 1. Verifica se o usuário existe
+    const user = await prisma.users.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    // 2. Gera token JWT com validade de 1h
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // 3. Monta o link de redefinição
+  const url = new URL('/novasenha', process.env.BASE_URL);
+url.searchParams.set('token', token);
+const resetLink = url.toString();
+
+    // 4. Envia o e-mail com layout HTML profissional
+    await transporter.sendMail({
+      from: `"EMEI" <${process.env.MAIL_USER}>`,
+      to: email,
+      subject: 'Redefinição de Senha - Portal EMEI',
+      html: `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Redefinição de Senha</title>
+          <style>
+            body {
+              font-family: 'Arial', sans-serif;
+              margin: 0;
+              padding: 30px 0;
+              background-color: #f2f2f2;
+            }
+            .container {
+              max-width: 680px;
+              margin: 0 auto;
+              background-color: #ffffff;
+              border-radius: 6px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              padding: 30px;
+              border-bottom: 1px solid #ddd;
+            }
+            .header img {
+              width: 120px;
+              height: auto;
+            }
+            .content {
+              padding: 40px 30px;
+              color: #333;
+            }
+            .button {
+              display: inline-block;
+              margin: 30px 0;
+              padding: 14px 28px;
+              font-size: 16px;
+              color: #fff;
+              background-color: #6599FF;
+              text-decoration: none;
+              border-radius: 6px;
+            }
+            .footer {
+              padding: 25px 30px;
+              background-color: #f8f9fa;
+              text-align: center;
+              font-size: 14px;
+              color: #6c757d;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <img src="https://raw.githubusercontent.com/saulandre/emei-backend/main/src/public/favicon.png" alt="Logo EMEI" />
+            </div>
+            <div class="content">
+              <p>Olá ${user.nome || 'usuário'},</p>
+              <p>Você solicitou a redefinição da sua senha no <strong>Portal EMEI</strong>.</p>
+              <p>Para criar uma nova senha, clique no botão abaixo:</p>
+              <div style="text-align: center;">
+                <a class="button" href="${resetLink}" target="_blank">Redefinir Senha</a>
+              </div>
+              <p>⏳ Este link é válido por 1 hora.</p>
+              <p>Se você não solicitou essa redefinição, pode ignorar este e-mail.</p>
+              <p>Atenciosamente,<br />Equipe CONMEL</p>
+            </div>
+            <div class="footer">
+              <p>Esta é uma mensagem automática. Por favor, não responda este e-mail.</p>
+              <p>Dúvidas? Contate-nos: emeiiraja23@gmail.com</p>
+              <p>© ${new Date().getFullYear()} EMEI App. Todos os direitos reservados.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    });
+
+    // 5. Resposta de sucesso
+    return res.status(200).json({ message: 'E-mail de redefinição enviado com sucesso' });
+
+  } catch (error) {
+    console.error('Erro ao enviar e-mail de redefinição:', error);
+    return res.status(500).json({ message: 'Erro ao enviar email' });
+  }
+};
+
+
+const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: "Token e nova senha são obrigatórios." });
+  }
+
+  try {
+    // Verifica o token JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    // Busca o usuário no banco
+    const user = await prisma.users.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ message: "Usuário não encontrado." });
+    }
+
+    // Hash da nova senha
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Atualiza a senha no banco
+    await prisma.users.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return res.status(200).json({ message: "Senha redefinida com sucesso." });
+  } catch (error) {
+    console.error("Erro ao redefinir senha:", error);
+    return res.status(401).json({ message: "Token inválido ou expirado." });
+  }
+};
  const getProfile = async (req, res) => { 
  
     const { userId } = req.params; 
@@ -1675,7 +1822,7 @@ const updateInscricao = async (req, res) => {
     }
   }; 
 
-  const resetPassword = async (req, res) => {
+/*   const resetPassword = async (req, res) => {
     const { token, newPassword } = req.body;
   
 
@@ -1719,7 +1866,7 @@ const updateInscricao = async (req, res) => {
   
       return res.status(400).json({ message: 'Token inválido ou erro inesperado.' });
     }
-  };
+  }; */
   
   const listarParticipantes = async (req, res) => {
     try {
@@ -1946,4 +2093,4 @@ const enviarEmailComArquivo = async (nomeCompleto, arquivo) => {
 };
 
   
-  module.exports = { esquecisenha, enviarEmailComArquivo, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil, updateInscricao}
+  module.exports = { esquecisenha, enviarEmailComArquivo, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil,enviarEmailRedefinicao, updateInscricao}

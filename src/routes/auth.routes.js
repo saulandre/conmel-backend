@@ -5,6 +5,8 @@ const {
   register,
   resendVerificationCode,
   verificar,
+
+enviarEmailRedefinicao,
   validateToken,
   participante,
   obterInscricao,
@@ -41,7 +43,8 @@ router.use((req, res, next) => {
   console.log(`📥 Nova requisição: ${req.method} ${req.url}`);
   next();
 });
-
+router.post('/forgot-password', enviarEmailRedefinicao);
+router.post('/reset-password',  resetPassword);
 // Rotas públicas
 router.post('/entrar', validateLogin, login); // Validação de dados antes do login
 router.post('/registrar', validateRegister, register); // Validação de dados antes do registro
