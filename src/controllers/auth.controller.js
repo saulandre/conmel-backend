@@ -1371,9 +1371,9 @@ const resetLink = url.toString();
 
     // 4. Envia o e-mail com layout HTML profissional
     await transporter.sendMail({
-      from: `"EMEI" <${process.env.MAIL_USER}>`,
+      from: `"CONMEL" <${process.env.MAIL_USER}>`,
       to: email,
-      subject: 'Redefinição de Senha - Portal EMEI',
+      subject: 'Redefinição de Senha - Portal CONMEL',
       html: `
         <!DOCTYPE html>
         <html lang="pt-BR">
