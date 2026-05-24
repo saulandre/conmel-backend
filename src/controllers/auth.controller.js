@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { generateVerificationCode } = require('../services/validation');
 const dotenv = require('dotenv');
-const transporter = require('../config/mailer');
+const { sendMail } = require('../config/mailer');
 const Joi = require('joi');
 const { v4: uuidv4 } = require('uuid');
 const { PrismaClient, Prisma } = require('@prisma/client');
@@ -101,7 +101,7 @@ const CODE_EXPIRATION_TIME = 15 * 60 * 1000; // 15 minutos
 const RESEND_INTERVAL = 60000; // 60 segundos
  const newAccountEmail = async (name, email, code) => {
   try {
-    await transporter.sendMail({
+    await sendMail({
       from: `"CONMEL" <${process.env.MAIL_USER}>`,
       headers: {
         'X-Mailer': 'Nodemailer',
@@ -223,7 +223,7 @@ const upload = multer({ dest: 'uploads/' });
 
  const accountVerifiedEmail = async (name, email) => {
   try {
-    await transporter.sendMail({
+    await sendMail({
       from: `"CONMEL" <${process.env.MAIL_USER}>`,
       headers: {
         'X-Mailer': 'Nodemailer',
@@ -326,7 +326,7 @@ const upload = multer({ dest: 'uploads/' });
 
  const novoCodigoEmail = async (name, email, code) => {
   try {
-    await transporter.sendMail({
+    await sendMail({
       from: `"CONMEL" <${process.env.MAIL_USER}>`,
       to: email,
       subject: 'Novo código',
@@ -737,7 +737,7 @@ const calcularIdade = (dataNascimento) => {
 const mercadopago = require('mercadopago');
 
 
- const xparticipante = async (req, res) => {
+ const participante = async (req, res) => {
   const userId = req.userId;
   console.log("Valor de userId:", userId);
   console.log("Dados recebidos:", req.body);
@@ -1370,7 +1370,7 @@ url.searchParams.set('token', token);
 const resetLink = url.toString();
 
     // 4. Envia o e-mail com layout HTML profissional
-    await transporter.sendMail({
+    await sendMail({
       from: `"CONMEL" <${process.env.MAIL_USER}>`,
       to: email,
       subject: 'Redefinição de Senha - Portal CONMEL',
@@ -1624,7 +1624,7 @@ const resetPassword = async (req, res) => {
       const resetLink = `https://www.conmelrj.com.br/redefinir-senha?token=${resetToken}`;
   
       // Enviando o e-mail
-      await transporter.sendMail({
+      await sendMail({
         from: `"Seu App" <${process.env.MAIL_USER}>`,
         to: email,
         subject: "Redefinição de Senha",
@@ -1713,7 +1713,7 @@ const resetPassword = async (req, res) => {
     const resetLink = `http://conmelrj.com.br/recuperarsenha/route?token=${token}`;
   
     try {
-      await transporter.sendMail({
+      await sendMail({
         from: `"CONMEL" <${process.env.MAIL_USER}>`,
         headers: {
           'X-Mailer': 'Nodemailer',
@@ -2006,7 +2006,7 @@ const atualizarPerfil = async (req, res) => {
 const enviarEmailComArquivo = async (nomeCompleto, arquivo) => {
   console.log('Arquivo recebido:', arquivo);
   try {
-    await transporter.sendMail({
+    await sendMail({
       from: `"CONMEL" <${process.env.MAIL_USER}>`,
       to: ['and969696@outlook.com', 'saulandre@gmail.com', 'conmelespiritarj@gmail.com'],
       subject: `Pagamento de ${nomeCompleto} confirmado`,
