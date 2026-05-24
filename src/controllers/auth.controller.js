@@ -15,6 +15,13 @@ const {
   createdAtRangeForYear,
   yearFilterFromQuery,
 } = require('../constants/eventYear');
+const {
+  FORGOT_PASSWORD_GENERIC_OK,
+  buildPasswordResetLink,
+  signPasswordResetToken,
+  verifyPasswordResetToken,
+  validateNewPassword,
+} = require('../utils/passwordReset');
 const prisma = new PrismaClient();
 dotenv.config();
 
@@ -1363,26 +1370,24 @@ const updateInscricao = async (req, res) => {
   }
 }
 const enviarEmailRedefinicao = async (req, res) => {
-  const { email } = req.body;
+  const emailRaw = req.body?.email;
+  const email = typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : '';
+
+  if (!email) {
+    return res.status(400).json({ message: 'E-mail é obrigatório.' });
+  }
 
   try {
-    // 1. Verifica se o usuário existe
     const user = await prisma.users.findUnique({ where: { email } });
+
     if (!user) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
+      return res.status(200).json(FORGOT_PASSWORD_GENERIC_OK);
     }
 
-    // 2. Gera token JWT com validade de 1h
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = signPasswordResetToken(user);
+    const resetLink = buildPasswordResetLink(token);
 
-    // 3. Monta o link de redefinição
-  const url = new URL('/novasenha', process.env.BASE_URL);
-url.searchParams.set('token', token);
-const resetLink = url.toString();
-
-    // 4. Envia o e-mail com layout HTML profissional
     await sendMail({
-      from: `"CONMEL" <${process.env.MAIL_USER}>`,
       to: email,
       subject: 'Redefinição de Senha - Portal CONMEL',
       html: `
@@ -1444,7 +1449,7 @@ const resetLink = url.toString();
      <img src="https://i.postimg.cc/FKjK70kV/favicon.png" alt="Logo CONMEL">
             </div>
             <div class="content">
-              <p>Olá ${user.nome || 'usuário'},</p>
+              <p>Olá ${user.name || 'usuário'},</p>
               <p>Você solicitou a redefinição da sua senha no <strong>Portal CONMEL</strong>.</p>
               <p>Para criar uma nova senha, clique no botão abaixo:</p>
               <div style="text-align: center;">
@@ -1465,47 +1470,70 @@ const resetLink = url.toString();
       `
     });
 
-    // 5. Resposta de sucesso
-    return res.status(200).json({ message: 'E-mail de redefinição enviado com sucesso' });
-
+    return res.status(200).json(FORGOT_PASSWORD_GENERIC_OK);
   } catch (error) {
-    console.error('Erro ao enviar e-mail de redefinição:', error);
-    return res.status(500).json({ message: 'Erro ao enviar email' });
+    console.error('[password-reset] Erro ao enviar e-mail:', error?.message || error);
+    return res.status(500).json({
+      message:
+        'Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.',
+    });
   }
 };
 
 
 const resetPassword = async (req, res) => {
-  const { token, newPassword } = req.body;
+  const token =
+    typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+  const { newPassword } = req.body;
 
-  if (!token || !newPassword) {
-    return res.status(400).json({ message: "Token e nova senha são obrigatórios." });
+  if (!token || newPassword === undefined || newPassword === null) {
+    return res.status(400).json({ message: 'Token e nova senha são obrigatórios.' });
+  }
+
+  const pwdCheck = validateNewPassword(newPassword);
+  if (!pwdCheck.ok) {
+    return res.status(400).json({ message: pwdCheck.message });
   }
 
   try {
-    // Verifica o token JWT
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const { userId, resetTokenVersion } = verifyPasswordResetToken(token);
 
-    // Busca o usuário no banco
     const user = await prisma.users.findUnique({ where: { id: userId } });
     if (!user) {
-      return res.status(404).json({ message: "Usuário não encontrado." });
+      return res.status(400).json({ message: 'Token inválido ou expirado.' });
     }
 
-    // Hash da nova senha
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    if (
+      resetTokenVersion !== undefined &&
+      user.resetTokenVersion !== resetTokenVersion
+    ) {
+      return res.status(400).json({
+        message:
+          'Este link já foi utilizado ou não é mais válido. Solicite uma nova redefinição.',
+      });
+    }
 
-    // Atualiza a senha no banco
+    const hashedPassword = await bcrypt.hash(pwdCheck.password, 10);
+
     await prisma.users.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        resetTokenVersion: { increment: 1 },
+      },
     });
 
-    return res.status(200).json({ message: "Senha redefinida com sucesso." });
+    return res.status(200).json({ message: 'Senha redefinida com sucesso.' });
   } catch (error) {
-    console.error("Erro ao redefinir senha:", error);
-    return res.status(401).json({ message: "Token inválido ou expirado." });
+    console.error('[password-reset] Erro ao redefinir senha:', error?.message || error);
+
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({
+        message: 'Token expirado. Solicite uma nova redefinição de senha.',
+      });
+    }
+
+    return res.status(400).json({ message: 'Token inválido ou expirado.' });
   }
 };
  const getProfile = async (req, res) => { 
@@ -1709,129 +1737,8 @@ const resetPassword = async (req, res) => {
   };
   
 
-  const forgotPassword = async (req, res) => {
-    const { email } = req.body;
-  
-    const user = await prisma.users.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: 'Usuário não encontrado' });
-  
-    const token = jwt.sign(
-      { id: user.id, resetTokenVersion: user.resetTokenVersion },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-  
-    const resetLink = `http://conmelrj.com.br/recuperarsenha/route?token=${token}`;
-  
-    try {
-      await sendMail({
-        from: `"CONMEL" <${process.env.MAIL_USER}>`,
-        headers: {
-          'X-Mailer': 'Nodemailer',
-          'X-Priority': '3',
-          'Return-Path': 'process.env.MAIL_USER' 
-        },
-        to: email,
-        subject: 'Redefinição de Senha',
-        html: `
-          <!DOCTYPE html>
-          <html lang="pt-BR">
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Redefinir Senha</title>
-            <style>
-              body {
-                font-family: 'Arial', sans-serif;
-                margin: 0;
-                padding: 30px 0;
-                background-color: #F2F2F2;
-              }
-              .container {
-                max-width: 680px;
-                margin: 0 auto;
-                background-color: #ffffff;
-                border-radius: 3px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-              }
-              .header {
-                padding: 40px 30px 20px;
-                border-bottom: 1px solid #e9ecef;
-                text-align: center;
-              }
-              .header img {
-                height: 40px;
-              }
-              .content {
-                padding: 40px 30px;
-                color: #4a4e69;
-              }
-              .button-container {
-                margin: 30px 0;
-                text-align: center;
-              }
-              .reset-button {
-                display: inline-block;
-                padding: 15px 30px;
-                background-color: #22223b;
-                border-radius: 6px;
-                font-size: 16px;
-                font-weight: bold;
-                color: #fff;
-                text-decoration: none;
-              }
-              a {
-                color: #fff !important;
-                text-decoration: none !important;
-              }
-              .footer {
-                padding: 25px 30px;
-                background-color: #f8f9fa;
-                text-align: center;
-                font-size: 14px;
-                color: #6c757d;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <img src="https://i.postimg.cc/FKjK70kV/favicon.png" alt="Logo CONMEL">
-              </div>
-              
-              <div class="content">
-                <p>Olá ${user.name},</p>
-                
-                <p>Recebemos uma solicitação para redefinir sua senha no <strong>Portal CONMEL</strong>.</p>
-                <p>Se você não solicitou, pode ignorar esta mensagem. </p>
-      
-                <div class="button-container">
-                  <a href="${resetLink}" class="reset-button" target="_blank">Redefinir Senha</a>
-                </div>
-      
-                <p>🔒 Este link é válido por 15 minutos.</p>
-      
-                <p>Atenciosamente,<br>
-                Equipe CONMEL</p>
-              </div>
-      
-              <div class="footer">
-                <p>Esta é uma mensagem automática. Por favor, não responda este e-mail.</p>
-                <p>Dúvidas? Contate-nos: conmelespiritarj@gmail.com</p>
-                <p>© ${new Date().getFullYear()} CONMEL App. Todos os direitos reservados.</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      });
-  
-      res.json({ message: 'E-mail enviado com sucesso' });
-    } catch (error) {
-      console.error('Erro ao enviar e-mail:', error);
-      res.status(500).json({ message: 'Erro ao enviar e-mail' });
-    }
-  }; 
+  /** @deprecated Alias — mesma implementação segura (não expõe se e-mail existe) */
+  const forgotPassword = enviarEmailRedefinicao;
 
 /*   const resetPassword = async (req, res) => {
     const { token, newPassword } = req.body;

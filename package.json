@@ -6,7 +6,9 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "test:password-reset": "node scripts/test-password-reset-flow.js",
+    "test:password-reset:api": "node scripts/test-password-reset-flow.js --try-local"
   },
   "nodemonConfig": {
     "ignore": [
