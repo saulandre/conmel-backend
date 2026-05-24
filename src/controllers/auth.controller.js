@@ -10,6 +10,11 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const {
+  EVENT_REFERENCE_DATE,
+  createdAtRangeForYear,
+  yearFilterFromQuery,
+} = require('../constants/eventYear');
 const prisma = new PrismaClient();
 dotenv.config();
 
@@ -708,8 +713,8 @@ const upload = multer({ dest: 'uploads/' });
 
 
 const calcularIdade = (dataNascimento) => {
-  // Data de referência para cálculo da idade (19/07/2025)
-  const dataReferencia = new Date('2025-07-19');
+  // Data de referência para cálculo da idade (dia do evento)
+  const dataReferencia = new Date(EVENT_REFERENCE_DATE);
   
   // Cria um objeto Date com a data de nascimento fornecida
   const nascimento = new Date(dataNascimento);
@@ -717,7 +722,7 @@ const calcularIdade = (dataNascimento) => {
   // Calcula a diferença em anos
   let idade = dataReferencia.getFullYear() - nascimento.getFullYear();
 
-  // Ajusta caso o aniversário do usuário ainda não tenha ocorrido no ano de 2025
+  // Ajusta caso o aniversário do usuário ainda não tenha ocorrido no ano do evento
   const mesReferencia = dataReferencia.getMonth();
   const mesNascimento = nascimento.getMonth();
   const diaReferencia = dataReferencia.getDate();
@@ -1112,14 +1117,19 @@ const updateInscricao = async (req, res) => {
       });
     }
 
-    // 3. Buscar participantes com tratamento de erros específico
+    // 3. Buscar participantes (filtro por ano via createdAt; ?ano=2025 para edições antigas)
+    const ano = yearFilterFromQuery(req);
     const participantes = await prisma.participante2025.findMany({
-      where: { userId },
+      where: {
+        userId,
+        createdAt: createdAtRangeForYear(ano),
+      },
       select: {
         id: true,
         nomeCompleto: true,
         IE: true,
         createdAt: true,
+        statusPagamento: true,
       }
     });
 
@@ -1136,6 +1146,7 @@ const updateInscricao = async (req, res) => {
       count: participantes.length,
       data: participantes,
       meta: {
+        ano,
         requestId: req.requestId, // Assumindo que existe um ID de requisição
         timestamp: new Date().toISOString()
       }
@@ -1870,19 +1881,25 @@ const resetPassword = async (req, res) => {
   
   const listarParticipantes = async (req, res) => {
     try {
+      const ano = yearFilterFromQuery(req);
       const participantes = await prisma.participante2025.findMany({
+        where: {
+          createdAt: createdAtRangeForYear(ano),
+        },
         select: {
           id: true,
           nomeCompleto: true,
           IE: true,
           statusPagamento: true,
           linkPagamento: true,
+          createdAt: true,
         },
       });
   
       return res.status(200).json({
         success: true,
         data: participantes,
+        meta: { ano },
       });
     } catch (error) {
       console.error('Erro ao listar participantes:', error);
