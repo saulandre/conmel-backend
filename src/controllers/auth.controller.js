@@ -1931,7 +1931,7 @@ const enviarEmailComArquivo = async (nomeCompleto, arquivo) => {
   console.log('Arquivo recebido:', arquivo);
   try {
     await sendMail({
-      from: `"CONMEL" <${process.env.MAIL_USER}>`,
+      from: `"CONMEL" <${process.env.RESEND_FROM}>`,
       to: ['and969696@outlook.com', 'saulandre@gmail.com', 'conmelespiritarj@gmail.com'],
       subject: `Pagamento de ${nomeCompleto} confirmado`,
       html: `
