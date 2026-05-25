@@ -114,11 +114,11 @@ const RESEND_INTERVAL = 60000; // 60 segundos
  const newAccountEmail = async (name, email, code) => {
   try {
     await sendMail({
-      from: `"CONMEL" <${process.env.MAIL_USER}>`,
+      from: `"CONMEL" <${process.env.RESEND_FROM}>`,
       headers: {
         'X-Mailer': 'Nodemailer',
         'X-Priority': '3',
-        'Return-Path': 'process.env.MAIL_USER' 
+        'Return-Path': 'process.env.RESEND_FROM' 
       },
       to: email,
       subject: 'Confirmação de Cadastro',
