@@ -40,6 +40,7 @@ const MESSAGES = {
     invalidData: 'Dados inválidos fornecidos.',
     codeExpired: 'Código expirado. Solicite um novo.',
     resendTooSoon: 'Aguarde 60 segundos antes de reenviar o código.',
+    alreadyVerified: 'Conta já verificada.',
   },
   success: {
     verificationEmailSent: 'Código de verificação enviado. Verifique seu e-mail.',
@@ -431,56 +432,58 @@ const upload = multer({ dest: 'uploads/' });
 };
 
  const verificar = async (req, res) => {
-  const { userId, verificationCode } = req.body;
-  console.log('Dados recebidos:', req.body);  // Adicionando log para verificar os dados
+  const verificationCode =
+    typeof req.body.verificationCode === 'string'
+      ? req.body.verificationCode.trim()
+      : String(req.body.verificationCode ?? '').trim();
+
+  const userId = req.userId ?? parseInt(req.body.userId, 10);
 
   if (!userId || !verificationCode) {
     return res.status(400).json({ error: MESSAGES.errors.missingFields });
   }
 
   try {
-    // Busca o usuário no banco de dados
-    const userId = parseInt(req.body.userId, 10); // Converte string para número
-
     const user = await prisma.users.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!user) {
       return res.status(404).json({ error: MESSAGES.errors.userNotFound });
     }
 
-    // Verifica se o código de verificação coincide
-    if (user.verificationCode !== verificationCode) {
+    if (user.isVerified) {
+      return res.status(400).json({ error: MESSAGES.errors.alreadyVerified });
+    }
+
+    if (!user.verificationCode || user.verificationCode !== verificationCode) {
       return res.status(400).json({ error: MESSAGES.errors.verificationCodeInvalid });
     }
 
-    // Verifica se o código de verificação expirou
-    if (new Date(user.verificationCodeExpiration).getTime() < new Date().getTime()) {
+    if (
+      !user.verificationCodeExpiration ||
+      new Date(user.verificationCodeExpiration).getTime() < Date.now()
+    ) {
       return res.status(400).json({ error: MESSAGES.errors.codeExpired });
     }
 
-    // Atualiza o usuário e confirma a transação
     const updatedUser = await prisma.users.update({
       where: { id: userId },
       data: {
         isVerified: true,
-        verificationCode: null, // Invalida o código de verificação após o uso
-        verificationCodeExpiration: null, // Limpa a data de expiração
+        verificationCode: null,
+        verificationCodeExpiration: null,
       },
     });
 
-    // Envia o e-mail de confirmação de verificação
     await accountVerifiedEmail(updatedUser.name, updatedUser.email);
 
-    // Geração do token após a verificação
     const token = jwt.sign(
       { id: updatedUser.id, email: updatedUser.email, isVerified: true },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // Retorno com a mensagem de sucesso e os dados do usuário
     return res.json({
       message: MESSAGES.success.verifiedUser,
       token,
@@ -658,40 +661,41 @@ const upload = multer({ dest: 'uploads/' });
   }
 };
  const resendVerificationCode = async (req, res) => {
-  const { email } = req.body;
+  const userId = req.userId;
 
   try {
-    console.log('Iniciando reenvio do código de verificação para:', email);
+    if (!userId) {
+      return res.status(401).json({ error: 'Acesso não autorizado' });
+    }
 
-    // Verifica se o usuário existe
-    const user = await prisma.users.findUnique({ where: { email } });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
 
     if (!user) {
-      console.log(`Usuário não encontrado: ${email}`);
       return res.status(400).json({ error: MESSAGES.errors.userNotFound });
     }
 
-    console.log(`Usuário encontrado: ${user.name}`);
+    if (user.isVerified) {
+      return res.status(400).json({ error: 'Conta já verificada.' });
+    }
 
-    // Gera um novo código de verificação
+    const elapsed = Date.now() - new Date(user.lastVerificationRequest).getTime();
+    if (elapsed < RESEND_INTERVAL) {
+      return res.status(429).json({ error: MESSAGES.errors.resendTooSoon });
+    }
+
     const newVerificationCode = generateVerificationCode();
     const verificationCodeExpiration = new Date(Date.now() + CODE_EXPIRATION_TIME);
 
-    // Atualiza o código e a data de expiração no banco
     await prisma.users.update({
-      where: { email },
+      where: { id: userId },
       data: {
         verificationCode: newVerificationCode,
         verificationCodeExpiration,
+        lastVerificationRequest: new Date(),
       },
     });
 
-    console.log('Novo código gerado e banco de dados atualizado.');
-
-    // Envia o e-mail de verificação
     await novoCodigoEmail(user.name, user.email, newVerificationCode);
-
-    console.log(`E-mail de verificação enviado para: ${user.email}`);
 
     return res.status(200).json({ message: MESSAGES.success.verificationCodeResent });
   } catch (error) {

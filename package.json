@@ -8,7 +8,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "test:password-reset": "node scripts/test-password-reset-flow.js",
-    "test:password-reset:api": "node scripts/test-password-reset-flow.js --try-local"
+    "test:password-reset:api": "node scripts/test-password-reset-flow.js --try-local",
+    "test:verification": "node scripts/test-verification-flow.js"
   },
   "nodemonConfig": {
     "ignore": [
