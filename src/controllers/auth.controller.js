@@ -114,12 +114,6 @@ const RESEND_INTERVAL = 60000; // 60 segundos
  const newAccountEmail = async (name, email, code) => {
   try {
     await sendMail({
-      from: `"CONMEL" <${process.env.RESEND_FROM}>`,
-      headers: {
-        'X-Mailer': 'Nodemailer',
-        'X-Priority': '3',
-        'Return-Path': 'process.env.RESEND_FROM' 
-      },
       to: email,
       subject: 'Confirmação de Cadastro',
       html: `
@@ -236,12 +230,6 @@ const upload = multer({ dest: 'uploads/' });
  const accountVerifiedEmail = async (name, email) => {
   try {
     await sendMail({
-      from: `"CONMEL" <${process.env.MAIL_USER}>`,
-      headers: {
-        'X-Mailer': 'Nodemailer',
-        'X-Priority': '3',
-        'Return-Path': 'process.env.MAIL_USER' 
-      },
       to: email,
       subject: '✅ Conta Verificada',
       html: `
@@ -339,7 +327,6 @@ const upload = multer({ dest: 'uploads/' });
  const novoCodigoEmail = async (name, email, code) => {
   try {
     await sendMail({
-      from: `"CONMEL" <${process.env.MAIL_USER}>`,
       to: email,
       subject: 'Novo código',
       html: `
@@ -1664,7 +1651,6 @@ const resetPassword = async (req, res) => {
   
       // Enviando o e-mail
       await sendMail({
-        from: `"Seu App" <${process.env.MAIL_USER}>`,
         to: email,
         subject: "Redefinição de Senha",
         html: `
@@ -1931,7 +1917,6 @@ const enviarEmailComArquivo = async (nomeCompleto, arquivo) => {
   console.log('Arquivo recebido:', arquivo);
   try {
     await sendMail({
-      from: `"CONMEL" <${process.env.RESEND_FROM}>`,
       to: ['and969696@outlook.com', 'saulandre@gmail.com', 'conmelespiritarj@gmail.com'],
       subject: `Pagamento de ${nomeCompleto} confirmado`,
       html: `
