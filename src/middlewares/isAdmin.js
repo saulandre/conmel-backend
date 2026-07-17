@@ -19,7 +19,7 @@ const isAdmin = async (req, res, next) => {
 
     // Verifica se o usuário tem permissão de admin
     if (user.role !== "admin") {
-      return res.status(403).json({ error: "Acesso negado. Apenas administradores podem editar instituições." });
+      return res.status(403).json({ error: "Acesso negado. Apenas administradores podem realizar esta ação." });
     }
 
     next(); // Usuário é admin, prosseguir para a próxima função

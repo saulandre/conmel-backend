@@ -23,7 +23,8 @@ const {
   validateNewPassword,
 } = require('../utils/passwordReset');
 const {
-  arePublicRegistrationsOpen,
+  getPublicRegistrationsOpen,
+  setPublicRegistrationsOpen,
   PUBLIC_REGISTRATIONS_CLOSED_MESSAGE,
 } = require('../constants/registrationStatus');
 const prisma = new PrismaClient();
@@ -32,7 +33,7 @@ dotenv.config();
 /** Status público das inscrições (não exige autenticação). */
 const getRegistrationStatus = async (_req, res) => {
   try {
-    const publicOpen = arePublicRegistrationsOpen();
+    const publicOpen = await getPublicRegistrationsOpen(prisma);
     return res.status(200).json({
       publicOpen,
       message: publicOpen
@@ -42,6 +43,50 @@ const getRegistrationStatus = async (_req, res) => {
   } catch (error) {
     console.error('Erro ao obter status das inscrições:', error);
     return res.status(500).json({ error: 'Erro ao obter status das inscrições.' });
+  }
+};
+
+/**
+ * Altera abertura das inscrições públicas.
+ * Requer autenticação + role admin (middleware). Idempotente.
+ * Body: { publicOpen: boolean }
+ */
+const updateRegistrationStatus = async (req, res) => {
+  try {
+    const { publicOpen } = req.body ?? {};
+
+    if (typeof publicOpen !== 'boolean') {
+      return res.status(400).json({
+        error: 'Informe publicOpen como boolean (true ou false).',
+      });
+    }
+
+    const result = await setPublicRegistrationsOpen(prisma, publicOpen, req.userId);
+
+    const successMessage = result.publicOpen
+      ? 'As inscrições públicas da CONMEL foram reabertas.'
+      : 'As inscrições públicas da CONMEL foram encerradas.';
+
+    return res.status(200).json({
+      success: true,
+      publicOpen: result.publicOpen,
+      previousOpen: result.previousOpen,
+      changed: result.changed,
+      message: successMessage,
+    });
+  } catch (error) {
+    if (error.code === 'SETTINGS_TABLE_MISSING') {
+      return res.status(503).json({
+        error:
+          'Não foi possível alterar o estado das inscrições. Verifique e tente novamente.',
+        details: error.message,
+      });
+    }
+    console.error('Erro ao atualizar status das inscrições:', error?.message || error);
+    return res.status(500).json({
+      error:
+        'Não foi possível alterar o estado das inscrições. Verifique e tente novamente.',
+    });
   }
 };
 
@@ -878,7 +923,7 @@ const mercadopago = require('mercadopago');
       return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
     }
 
-    const publicOpen = arePublicRegistrationsOpen();
+    const publicOpen = await getPublicRegistrationsOpen(prisma);
     const isAdminUser = usuario.role === 'admin';
 
     if (!publicOpen && !isAdminUser) {
@@ -2041,4 +2086,4 @@ const enviarEmailComArquivo = async (nomeCompleto, arquivo) => {
 };
 
   
-  module.exports = { esquecisenha, enviarEmailComArquivo, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil,enviarEmailRedefinicao, updateInscricao, getRegistrationStatus}
+  module.exports = { esquecisenha, enviarEmailComArquivo, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil,enviarEmailRedefinicao, updateInscricao, getRegistrationStatus, updateRegistrationStatus}

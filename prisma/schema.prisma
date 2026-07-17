@@ -153,3 +153,14 @@ model PasswordResetToken {
 
   @@map("PasswordResetToken")
 }
+
+/// Configurações chave/valor da aplicação (ex.: abertura das inscrições públicas).
+/// Migration proposta em prisma/proposals/ — aplicar manualmente no banco.
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+  updatedBy Int?
+
+  @@map("AppSettings")
+}
