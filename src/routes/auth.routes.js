@@ -22,6 +22,7 @@ const {
   atualizarPerfil,
   updateInscricao,
   enviarEmailComArquivo,
+  getRegistrationStatus,
 } = require('../controllers/auth.controller.js');
 const upload = require('../config/upload');
 const {
@@ -49,6 +50,7 @@ router.post('/recuperarsenha', resetPassword);
 // --- Autenticação pública ---
 router.post('/entrar', validateLogin, login);
 router.post('/registrar', validateRegister, register);
+router.get('/inscricoes-status', getRegistrationStatus);
 
 // --- Rotas autenticadas ---
 router.post('/verificar', isAuthenticated, validateVerification, verificar);

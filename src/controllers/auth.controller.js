@@ -22,8 +22,28 @@ const {
   verifyPasswordResetToken,
   validateNewPassword,
 } = require('../utils/passwordReset');
+const {
+  arePublicRegistrationsOpen,
+  PUBLIC_REGISTRATIONS_CLOSED_MESSAGE,
+} = require('../constants/registrationStatus');
 const prisma = new PrismaClient();
 dotenv.config();
+
+/** Status público das inscrições (não exige autenticação). */
+const getRegistrationStatus = async (_req, res) => {
+  try {
+    const publicOpen = arePublicRegistrationsOpen();
+    return res.status(200).json({
+      publicOpen,
+      message: publicOpen
+        ? 'Inscrições públicas abertas.'
+        : 'As inscrições para a CONMEL estão encerradas. Agradecemos o seu interesse.',
+    });
+  } catch (error) {
+    console.error('Erro ao obter status das inscrições:', error);
+    return res.status(500).json({ error: 'Erro ao obter status das inscrições.' });
+  }
+};
 
 // Constantes atualizadas para mensagens
 const MESSAGES = {
@@ -845,10 +865,10 @@ const mercadopago = require('mercadopago');
   }
 
   try {
-    // Verificação do usuário
+    // Verificação do usuário (role validada no servidor — não confiar no body)
     const usuario = await prisma.users.findUnique({
       where: { id: userId },
-      select: { id: true, isVerified: true }
+      select: { id: true, isVerified: true, role: true }
     });
 
     if (!usuario) {
@@ -857,6 +877,22 @@ const mercadopago = require('mercadopago');
     if (!usuario.isVerified) {
       return res.status(403).json({ error: MESSAGES.errors.unverifiedUser });
     }
+
+    const publicOpen = arePublicRegistrationsOpen();
+    const isAdminUser = usuario.role === 'admin';
+
+    if (!publicOpen && !isAdminUser) {
+      return res.status(403).json({
+        error: PUBLIC_REGISTRATIONS_CLOSED_MESSAGE,
+      });
+    }
+
+    if (isAdminUser && !publicOpen) {
+      console.log(
+        `[inscrição administrativa] adminUserId=${userId} publicOpen=${publicOpen}`
+      );
+    }
+
     const participanteId = uuidv4();
     const dadosParticipante = {
       id: participanteId,
@@ -2005,4 +2041,4 @@ const enviarEmailComArquivo = async (nomeCompleto, arquivo) => {
 };
 
   
-  module.exports = { esquecisenha, enviarEmailComArquivo, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil,enviarEmailRedefinicao, updateInscricao}
+  module.exports = { esquecisenha, enviarEmailComArquivo, obterInscricao, getProfile, updateProfile, atualizarInstituicao, listarInstituicoes, criarInstituicao, getparticipantes, participante,resendVerificationCode, login, register, validateToken,verificar, paymentId,resetPassword, forgotPassword,listarParticipantes, notificacao, AtualizarpaymentId, atualizarPerfil,enviarEmailRedefinicao, updateInscricao, getRegistrationStatus}
